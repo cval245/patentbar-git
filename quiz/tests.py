@@ -3,7 +3,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from quiz.views import HomePageView, IndexView
-from quiz.models import Quiz
+from quiz.models import Answer, Quiz
 # Create your tests here.
 
 
@@ -21,14 +21,25 @@ class HomePageTest(TestCase):
 
 class QuizIndexTest(TestCase):
 
+    def setUp(self):
+        Quiz.objects.create(id=1, title = "Testing Quiz 1")
+        Quiz.objects.create(id=2, title = "Testing Quiz 2")
+        self.client = Client()
+
+
     def test_quiz_page_has_html(self):
         response = self.client.get('/quiz/')
         self.assertTemplateUsed(response, 'quiz/index.html')
 
 
-    def test_quiz_page_has_links_to_a_quiz(self):
+    def test_quiz_page_has_links(self):
         response = self.client.get('/quiz/')
         self.assertIn(b'<a href=', response.content)
+
+    def test_quiz_page_index_view_passes_quiz_title_in_context(self):
+        response = self.client.get('/quiz/')
+        self.assertQuerysetEqual(response.context['quiz'],
+                                 map(repr, Quiz.objects.all()))
 
 
 class QuizDetailView(TestCase):
@@ -54,10 +65,7 @@ class QuizDetailView(TestCase):
         x = 1 # initial quiz
         path = reverse('quiz:detail', args=(x,))
         response = self.client.get(path)
-        print(response)
-        print(Quiz.objects.get(id=x).title)
         quiz_title = Quiz.objects.get(id=x).title
-        print(quiz_title)
         self.assertIn(quiz_title.encode('utf-8'), response.content)
 
 

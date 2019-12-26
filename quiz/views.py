@@ -11,10 +11,11 @@ def HomePageView(request):
 
 class IndexView(generic.ListView):
     template_name = 'quiz/index.html'
+    context_object_name = 'quiz'
 
     def get_queryset(self):
         """Return all the quizzes"""
-        return Quiz.objects.order_by('quiz_title')
+        return Quiz.objects.order_by('title')
 
 class QuizDetailView(generic.DetailView):
     template_name = 'quiz/detail.html'
@@ -25,5 +26,4 @@ class QuizDetailView(generic.DetailView):
         context = super().get_context_data(**kwargs)
         quiz_id = self.kwargs.pop('pk')
         context['quiz_title'] = Quiz.objects.get(id=quiz_id).title
-        print('Context Title', context['quiz_title'])
         return context

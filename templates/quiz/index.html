@@ -6,7 +6,9 @@
 </h1>
 <body>
     <ul>
-        <li><a href=""> This is an item on the list</a></li>
-        <li><a href=""> Bob</a></li>
+        {% for quiz in quiz %}
+        <li><a href="{% url 'quiz:detail' quiz.id %}">
+            {{ quiz.title }}</a></li>
+        {% endfor %}
     </ul>
 </body>
