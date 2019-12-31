@@ -4,10 +4,14 @@
         <title> Patent-Bar </title>
     </head>
     <h1>
-        {{ quiz_title }}
+        Select a Quiz
     </h1>
     <body>
         Details on Quiz
     </body>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Start Quiz" name="start">
 
 </html>

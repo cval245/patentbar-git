@@ -3,15 +3,27 @@ from django.test import LiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
-from quiz.models import Answer, Quiz
+from quiz.models import Answer, Question, Quiz
 
 class NewVisitorTest(LiveServerTestCase):
 
     def setUp(self):
-        Quiz.objects.create(id=1, title="Functional Testing Quiz 1")
+        question_id = 1
+        answer_id = 1
+        answer_id_two = 2
+        quiz_id = 1
+        Quiz.objects.create(id=quiz_id, title = "Functional Testing Quiz 1")
         Quiz.objects.create(id=2, title="Functional Testing Quiz 2")
-        Answer.objects.create(id=1, quiz=1, text="Quiz 1 Answer A")
-        Answer.objects.create(id=2, quiz=2, text="Quiz 1 Answer A")
+        Question.objects.create(id=question_id,
+                                quiz=Quiz.objects.get(id=quiz_id),
+                                text = "Testing Question 1")
+        Answer.objects.create(id=answer_id,
+                              question=Question.objects.get(id=question_id),
+                              text="Question 1 Answer A")
+        Answer.objects.create(id=answer_id_two,
+                              question=Question.objects.get(id=question_id),
+                              text="Question 1 Answer B")
+
         self.browser = webdriver.Firefox()
 
     def tearDown(self):
@@ -62,40 +74,49 @@ class NewVisitorTest(LiveServerTestCase):
     def test_accessing_quiz_details(self):
 
         # He goes to the first test and notices the header of the page is
-        # the title of the quiz
+        # select a quiz
         quiz_no = 1 # first quiz
         self.browser.get(self.live_server_url + '/quiz/{}'.format(quiz_no))
         header = self.browser.find_element_by_tag_name('h1')
-        self.assertIn('Functional Testing Quiz 1', header.text)
+        self.assertIn('Select a Quiz', header.text)
 
         # He then checks the second quiz and notices the header of the page
         # is the title of the second quiz
         quiz_no = 2 # second quiz
         self.browser.get(self.live_server_url + '/quiz/{}'.format(quiz_no))
         header = self.browser.find_element_by_tag_name('h1')
-        self.assertIn('Functional Testing Quiz 2', header.text)
+        self.assertIn('Select a Quiz', header.text)
 
-        # There is a button which allows him to start the quiz.
-        self.fail('Finish this test')
+        # There is a button with the name to start the quiz.
+        input_button = self.browser.find_element_by_name('start')
+        self.assertIn('Start Quiz', input_button.get_attribute("value"))
 
-    def test_starting_quiz_page(self):
+        # There is a form
+        form = self.browser.find_element_by_tag_name('form')
+        self.assertIn('post', form.get_attribute("method"))
+
+    def test_quiz_question_page(self):
 
         # He starts the exam and he sees a question
         quiz_no = 1 # first quiz
+        question_id = 1
         self.browser.get(self.live_server_url +
-                         '/quiz/{}/start'.format(quiz_no))
+                         '/quiz/{}/question{}'.format(quiz_no, question_id))
         header = self.browser.find_element_by_tag_name('h1')
-        self.assertEquals(Quiz.objects.get(id=quiz_no).title, header.text)
 
-        quiz_no = 1 # first quiz
-        self.browser.get(self.live_server_url +
-                         '/quiz/{}/start'.format(quiz_no))
-        header = self.browser.find_element_by_tag_name('h1')
-        self.assertEquals(Quiz.objects.get(id=quiz_no).title, header.text)
+        ## Commented out because form replaced question text
+        #self.assertEquals(Question.objects.get(id=question_id).text,
+        #                  header.text)
 
-        # He sees a different selection of answers
-        
 
+        # He sees a form with a different selection of answers these answers
+        # correspond to the answers to each question.
+        answers = Answer.objects.filter(question=question_id)
+        displayed_list = self.browser.find_elements_by_tag_name('li')
+
+        # if there is an error, maybe there is an extra <li> somewhere
+        for i, answer in enumerate(answers,):
+            self.assertIn(answer.text, displayed_list[i].text)
 
         # The answers are displayed in radiobuttons
 
