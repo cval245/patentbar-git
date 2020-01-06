@@ -1,0 +1,22 @@
+<head>
+    <title> Patent-Bar </title>
+</head>
+<h1>
+    Sign Up
+</h1>
+{% if form.errors %}
+<p>
+    Your username and password didn't match.
+    Please try again.
+</p>
+{% else %}
+<p>Please sign up here</p>
+{% endif %}
+<div class="signup-form">
+    <form action="{% url 'users:signup' %}" method="post">
+        {{ form.as_p }}
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}" />
+        <p><input type="submit" value="Register"></p>
+    </form>
+</div>
