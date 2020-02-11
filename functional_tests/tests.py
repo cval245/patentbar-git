@@ -4,6 +4,82 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
 from quiz.models import Answer, Question, Quiz
+from users.models import CustomUser
+
+class VisitorAccountsTest(LiveServerTestCase):
+    def setUp(self):
+        self.browser = webdriver.Firefox()
+
+    def tearDown(self):
+        self.browser.quit()
+
+    def test_title_on_accounts_page(self):
+        self.browser.get(self.live_server_url)
+        self.assertIn('Patent-Bar', self.browser.title + '/account')
+
+    def test_account_text_on_accounts_page(self):
+        self.browser.get(self.live_server_url + '/account')
+        header = self.browser.find_element_by_tag_name('h1')
+        self.assertIn('Login', header.text)
+
+    # The logged in user sees his username
+    def test_username_shown_on_dashboard(self):
+        password = 'abc123'
+        user = CustomUser.objects.create_user('testUserBob','bob@bob.com'
+                                              , password)
+        user.save()
+        self.login_with_test_default(user, password)
+
+        header = self.browser.find_element_by_tag_name('p')
+        self.assertIn(user.username, header.text)
+
+    def login_with_test_default(self, user, password):
+
+        self.browser.get(self.live_server_url + '/account/')
+        username_field = self.browser.find_element_by_css_selector('form input[name="username"]')
+        password_field = self.browser.find_element_by_css_selector('form input[name="password"]')
+        username_field.send_keys(user.username)
+        password_field.send_keys(password)
+
+        submit = self.browser.find_element_by_css_selector('form input[type="submit"]')
+        submit.click()
+
+class VisitorSignUpTest(LiveServerTestCase):
+    def setUp(self):
+        self.browser = webdriver.Firefox()
+
+    def tearDown(self):
+        self.browser.quit()
+
+    def test_title_on_signup_page(self):
+        self.browser.get(self.live_server_url)
+        self.assertIn('Patent-Bar', self.browser.title + '/account/signup')
+
+    def test_signup_text_on_signup_page(self):
+        self.browser.get(self.live_server_url + '/account/signup')
+        header = self.browser.find_element_by_tag_name('h1')
+        self.assertIn('Sign Up', header.text)
+
+    def test_form_on_signup_page(self):
+        self.browser.get(self.live_server_url + '/account/signup')
+        form = self.browser.find_element_by_tag_name('form')
+        self.assertIn('post', form.get_attribute("method"))
+
+class VisitorLoginTest(LiveServerTestCase):
+    def setUp(self):
+        self.browser = webdriver.Firefox()
+
+    def tearDown(self):
+        self.browser.quit()
+
+    def test_title_on_login_page(self):
+        self.browser.get(self.live_server_url)
+        self.assertIn('Patent-Bar', self.browser.title + '/account/login')
+
+    def test_login_text_on_login_page(self):
+        self.browser.get(self.live_server_url + '/account/login')
+        header = self.browser.find_element_by_tag_name('h1')
+        self.assertIn('Login', header.text)
 
 class NewVisitorTest(LiveServerTestCase):
 
@@ -44,7 +120,7 @@ class NewVisitorTest(LiveServerTestCase):
 
         # He notices the browser heading is Quiz
         header = self.browser.find_element_by_tag_name('h1')
-        self.assertIn('Quiz',header.text)
+        self.assertIn('Quiz', header.text)
 
         # He notices there is a list
         list_test = self.browser.find_element_by_tag_name('ul')

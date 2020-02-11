@@ -21,4 +21,5 @@ urlpatterns = [
     path('', views.HomePageView, name='home'),
     path('admin/', admin.site.urls),
     path('quiz/', include('quiz.urls')),
+    path('account/', include('users.urls')),
 ]

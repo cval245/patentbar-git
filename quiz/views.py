@@ -33,8 +33,7 @@ class QuizDetailView(generic.DetailView):
         finish_time=datetime(2000, 1, 1, 0, 0, 0, 0) # default placeholder
         if form.is_valid():
             quiz = form.cleaned_data['quizzes']
-            print("Running man", quiz)
-            submission = QuizAttempt.objects.create(user=1,
+            submission = QuizAttempt.objects.create(user=request.user,
                                                     quiz=quiz,
                                                     finish_time=finish_time)
             return HttpResponseRedirect('/quiz/')
@@ -56,7 +55,7 @@ class QuestionView(generic.CreateView):
         form = self.form_class(request.POST, question=question_id)
         if form.is_valid():
             ANSWER = form.cleaned_data['choice']
-            submission = AnswersSubmitted.objects.create(user=1,
+            submission = AnswersSubmitted.objects.create(user=request.user,
                                                          question=QUESTION,
                                                          answer=ANSWER)
             return HttpResponseRedirect('/quiz/')

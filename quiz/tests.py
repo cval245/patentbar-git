@@ -7,6 +7,7 @@ from quiz.forms import AnswerForm
 
 from userProfile.models import AnswersSubmitted, QuizAttempt
 from quiz.models import Answer, Question, Quiz
+from users.models import CustomUser
 
 from quiz.views import HomePageView, IndexView
 # Create your tests here.
@@ -53,6 +54,11 @@ class QuizDetailView(TestCase):
         Quiz.objects.create(id=1, title = "Testing Quiz 1")
         Quiz.objects.create(id=2, title = "Testing Quiz 2")
         self.client = Client()
+        user=CustomUser.objects.create_user('test_UserProfile',
+                                             email='a@a.net',
+                                             password='abc123')
+        user.save()
+        self.client.login(username='test_UserProfile', password='abc123')
 
     def test_quiz_detail_has_html(self):
         x = 1 # initial quiz
@@ -79,7 +85,6 @@ class QuizDetailView(TestCase):
         quiz_id = 1
         path = reverse('quiz:detail', args=(quiz_id,))
         response = self.client.post(path, {'quizzes':quiz_id})
-        print("Look at this !", QuizAttempt.objects.all())
         saved_attempt = QuizAttempt.objects.get(id=1)
         self.assertEqual(saved_attempt.quiz.id, quiz_id)
 
@@ -120,11 +125,17 @@ class AnswerModelTest(TestCase):
 
     def test_foreign_key_to_quiz(self):
         for count, answer in enumerate(Answer.objects.all(), start=1):
-            print(Answer.objects.get(id=count).question.quiz)
             self.fail("Need to finish this test")
 
 class QuizQuestionTest(TestCase):
     def setUp(self):
+
+        user=CustomUser.objects.create_user('test_UserProfile',
+                                             email='a@a.net',
+                                             password='abc123')
+        user.save()
+        self.client.login(username='test_UserProfile', password='abc123')
+
         question_id = 1
         answer_id = 1
         answer_id_two = 2
@@ -214,7 +225,6 @@ class QuizAnswerFormTest(TestCase):
     def test_form_renders_radio_buttons(self):
         form = AnswerForm()
         for field in form:
-            print(field.field.widget)
             widget_desired = forms.widgets.Textarea
             widget_displayed = field.field.widget
             #self.assertIn(str(widget_desired), str(widget_displayed))

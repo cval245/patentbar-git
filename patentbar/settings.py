@@ -25,14 +25,16 @@ SECRET_KEY = 'h9kdv$ki@js1x0g$o0(0ceeu5w_3iv_#az&jqni4^@*63=^i2h'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'users.apps.UsersConfig',
     'userProfile.apps.UserprofileConfig',
     'quiz.apps.QuizConfig',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -76,14 +78,31 @@ WSGI_APPLICATION = 'patentbar.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
+    #'default': {
+        # 'ENGINE': 'django.db.backends.postgresql',
+        # 'NAME': 'postgres',
+        # 'USER': 'postgres',
+        # 'HOST': 'db',
+        # 'PORT': 5432,
+    #}
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.postgresql',
+    #     'NAME': os.environ.get('POSTGRESQL_DATABASE','patentbar'),
+    #     'USER': os.environ.get('POSGRESQL_USER', 'djangoconnect'),
+    #     'HOST': os.environ.get('POSTGRESQL_HOST', 'localhost'),
+    #     'PASSWORD': os.environ.get('POSTGRESQL_', 'Belgrade2010'),
+    #     'PORT': os.environ.get('POSTGRESQL_PORT', '5432'),
+    # }
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'patentbar',
-        'HOST': 'localhost',
         'USER': 'djangoconnect',
+        'HOST': '172.17.0.1',
+        #'HOST': 'localhost',
         'PASSWORD': 'Belgrade2010',
         'PORT': '5432',
     }
+
 }
 
 
@@ -124,3 +143,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATIC_ROOT = os.environ.get('STATIC_ROOT', '/public/static')
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT', '/public/media')
+
+AUTH_USER_MODEL = 'users.CustomUser'
+
+LOGIN_REDIRECT_URL = 'users:dashboard'
+LOGIN_URL = 'users:login'
+LOGOUT_URL = 'users:logout'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
