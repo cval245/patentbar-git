@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'userProfile.apps.UserprofileConfig',
     'quiz.apps.QuizConfig',
-
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -77,33 +76,24 @@ WSGI_APPLICATION = 'patentbar.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
-
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
 DATABASES = {
-    #'default': {
-        # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': 'postgres',
-        # 'USER': 'postgres',
-        # 'HOST': 'db',
-        # 'PORT': 5432,
-    #}
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': os.environ.get('POSTGRESQL_DATABASE','patentbar'),
-    #     'USER': os.environ.get('POSGRESQL_USER', 'djangoconnect'),
-    #     'HOST': os.environ.get('POSTGRESQL_HOST', 'localhost'),
-    #     'PASSWORD': os.environ.get('POSTGRESQL_', 'Belgrade2010'),
-    #     'PORT': os.environ.get('POSTGRESQL_PORT', '5432'),
-    # }
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'patentbar',
-        'USER': 'djangoconnect',
-        'HOST': '172.17.0.1',
-        #'HOST': 'localhost',
-        'PASSWORD': 'Belgrade2010',
-        'PORT': '5432',
-    }
+    ##################################################
+    # 'default': {                                   #
+    #     'ENGINE': 'django.db.backends.postgresql', #
+    #     'NAME': 'patentbar',                       #
+    #     'USER': 'djangoconnect',                   #
+    #     'HOST': '172.17.0.1',                      #
+    #     #'HOST': 'localhost',                      #
+    #     'PASSWORD': 'Belgrade2010',                #
+    #     'PORT': '5432',                            #
+    # }                                              #
+    ##################################################
 
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL')
+    )
 }
 
 
