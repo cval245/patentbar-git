@@ -1,25 +1,27 @@
 {
-  "scripts": {},
-  "env": {
-    "DEBUG_COLLECTSTATIC": {
-      "required": true
+    "name": "Patentbar-app",
+    "description": "",
+    "scripts": {},
+    "env": {
+        "DEBUG_COLLECTSTATIC": {
+            "required": true
+        },
+        "SECRET_KEY": {
+            "required": true
+        }
     },
-    "SECRET_KEY": {
-      "required": true
-    }
-  },
-  "formation": {
-    "web": {
-      "quantity": 1
-    }
-  },
-  "addons": [
-    "heroku-postgresql"
-  ],
-  "buildpacks": [
-    {
-      "url": "heroku/python"
-    }
-  ],
-  "stack": "heroku-18"
+    "formation": {
+        "web": {
+            "quantity": 1
+        }
+    },
+    "addons": [
+        "heroku-postgresql"
+    ],
+    "buildpacks": [
+        {
+            "url": "heroku/python"
+        }
+    ],
+    "stack": "heroku-18"
 }
