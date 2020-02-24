@@ -3,11 +3,9 @@
     "description": "",
     "scripts": {},
     "env": {
-        "DEBUG_COLLECTSTATIC": {
-            "required": true
-        },
+        "DEBUG_COLLECTSTATIC": "1",
         "SECRET_KEY": {
-            "required": true
+            "generator": "secret"
         }
     },
     "formation": {
