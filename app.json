@@ -1,7 +1,9 @@
 {
     "name": "Patentbar-app",
     "description": "",
-    "scripts": {},
+    "scripts": {
+        "test":"python manage.py test functional_tests"
+    },
     "env": {
         "DEBUG_COLLECTSTATIC": "1",
         "SECRET_KEY": {
