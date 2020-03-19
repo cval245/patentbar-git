@@ -1,11 +1,19 @@
 <html>
+    {% extends 'base.html' %}
+    {% block content %}
 
-    <h1>
+    <div class="row d-flex justify-content-center" >
+        <div class="d-flex align-items-start flex-column w-50 mb-3
+                    box_question shadow p-3 mb-5 bg-white rounded">
+    <h3>
         {{ question.text }}
-    </h1>
+    </h3>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <input type="submit" value="Submit">
-    <p> Bob </p>
+
+        </div>
+    </div>
+   {% endblock content %}
 </html>

@@ -52,9 +52,7 @@ class AnswersSubmittedModelTest(TestCase):
                                    finish_time = finish_time)
 
     def test_QuizAttempt_contains_current_user(self):
-
         self.client.login(username='test_UserProfile', password='abc123')
-        print("sjskdh ", auth.get_user(self.client))
         quiz_id = 1
         finish_time = timezone.now() + datetime.timedelta(0,5)
         QUIZ = Quiz.objects.create(id=quiz_id,

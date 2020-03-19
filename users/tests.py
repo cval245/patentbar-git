@@ -51,3 +51,20 @@ class UserDashboardView(TestCase):
         path = reverse('users:dashboard')
         response = self.client.get(path)
         self.assertIn('username', response.context)
+
+    def test_link_to_quiz_on_page(self):
+        response = self.client.get('/account/')
+        self.assertIn(b'<a href="/quiz/"', response.content)
+
+class UserResultsView(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+        user = CustomUser.objects.create_user('test_UserProfile',
+                                              email='a@a.net',
+                                              password='abc123')
+        user.save
+        self.client.login(username='test_UserProfile', password='abc123')
+
+    def test_results_page_has_test_results_shown(self):
+        response = self.client.get('/account/results/')

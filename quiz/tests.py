@@ -22,8 +22,19 @@ class HomePageTest(TestCase):
 
         self.assertTrue(response.content.startswith(b'<html>'))
         self.assertIn(b'<title>Patent-Bar</title>', response.content)
-        self.assertTrue(response.content.endswith(b'</html>'))
+        self.assertIn(b'</html>', response.content)
 
+    def test_home_page_has_link_to_quiz(self):
+        response = self.client.get('/')
+        self.assertIn(b'<a href="/quiz/"', response.content)
+
+    def test_home_page_has_link_to_login(self):
+        response = self.client.get('/')
+        self.assertIn(b'<a href="/account/login/"', response.content)
+
+    def test_home_page_has_link_to_signup(self):
+        response = self.client.get('/')
+        self.assertIn(b'<a href="/account/signup/"', response.content)
 
 class QuizIndexTest(TestCase):
 
@@ -85,9 +96,8 @@ class QuizDetailView(TestCase):
         quiz_id = 1
         path = reverse('quiz:detail', args=(quiz_id,))
         response = self.client.post(path, {'quizzes':quiz_id})
-        saved_attempt = QuizAttempt.objects.get(id=1)
+        saved_attempt = QuizAttempt.objects.filter(id=1)
         self.assertEqual(saved_attempt.quiz.id, quiz_id)
-
 
 class QuestionModelTest(TestCase):
     def setUp(self):
@@ -118,10 +128,12 @@ class AnswerModelTest(TestCase):
                                 text = "Testing Question 1")
         Answer.objects.create(id=answer_id,
                               question=Question.objects.get(id=question_id),
-                              text="Question 1 Answer A")
+                              text="Question 1 Answer A",
+                              correct_bool=True)
         Answer.objects.create(id=answer_id_two,
                               question=Question.objects.get(id=question_id),
-                              text="Question 1 Answer B")
+                              text="Question 1 Answer B",
+                              correct_bool=False)
 
     def test_foreign_key_to_quiz(self):
         for count, answer in enumerate(Answer.objects.all(), start=1):
@@ -137,8 +149,11 @@ class QuizQuestionTest(TestCase):
         self.client.login(username='test_UserProfile', password='abc123')
 
         question_id = 1
+        question_id_two = 2
         answer_id = 1
         answer_id_two = 2
+        answer_id_three = 3
+        answer_id_four = 4
         quiz_id = 1
         Quiz.objects.create(id=quiz_id, title = "Testing Quiz 1")
         Question.objects.create(id=question_id,
@@ -146,22 +161,40 @@ class QuizQuestionTest(TestCase):
                                 text = "Testing Question 1")
         Answer.objects.create(id=answer_id,
                               question=Question.objects.get(id=question_id),
-                              text="Question 1 Answer A")
+                              text="Question 1 Answer A",
+                              correct_bool=True)
         Answer.objects.create(id=answer_id_two,
                               question=Question.objects.get(id=question_id),
-                              text="Question 1 Answer B")
+                              text="Question 1 Answer B",
+                              correct_bool=False)
+
+        Question.objects.create(id=question_id_two,
+                                quiz=Quiz.objects.get(id=quiz_id),
+                                text = "Testing Question 1")
+        Answer.objects.create(id=answer_id_three,
+                              question=Question.objects.get(id=question_id_two),
+                              text="Question 1 Answer A",
+                              correct_bool=True)
+        Answer.objects.create(id=answer_id_four,
+                              question=Question.objects.get(id=question_id_two),
+                              text="Question 1 Answer B",
+                              correct_bool=False)
 
     def test_quiz_question_has_html(self):
         quiz_id = 1 # initial quiz
         question_id = 1 # initial question
-        path = reverse('quiz:question', args=(quiz_id,question_id))
+        attempt_id = 1
+        path = reverse('quiz:question', args=(quiz_id,
+                                              attempt_id, question_id))
         response = self.client.get(path)
         self.assertTemplateUsed(response, 'quiz/question.html')
 
     def test_quiz_form_passed_in_context(self):
         quiz_id = 1 # initial quiz
         question_id = 1 # initial question
-        path = reverse('quiz:question', args=(quiz_id,question_id))
+        attempt_id = 1
+        path = reverse('quiz:question', args=(quiz_id, attempt_id,
+                                              question_id))
         response = self.client.get(path)
         self.assertIn('form', response.context)
 
@@ -174,8 +207,11 @@ class QuizQuestionTest(TestCase):
         quiz_id = 1 # initial quiz
         question_id = 1 # initial question
         answer_id = 1
+        attempt_id = 1
 
-        path = reverse('quiz:question', args=(quiz_id, question_id))
+
+        path = reverse('quiz:question', args=(quiz_id, attempt_id,
+                                              question_id))
         QUESTION = Question.objects.get(id=question_id)
         ANSWER = Answer.objects.get(id=answer_id)
 
@@ -183,6 +219,26 @@ class QuizQuestionTest(TestCase):
         selected_answer =AnswersSubmitted.objects.get(answer__exact=ANSWER,
                                            question__exact = QUESTION)
         self.assertEqual(ANSWER, selected_answer.answer)
+
+
+    def test_submitted_answer_redirects_to_next_Question(self):
+        user_id = 1
+        quiz_id = 1 # initial quiz
+        question_id = 1 # initial question
+        question_id_two = 2
+        answer_id = 1
+        attempt_id = 1
+
+        path = reverse('quiz:question', args=(quiz_id, attempt_id,
+                                              question_id))
+        QUESTION = Question.objects.get(id=question_id)
+        ANSWER = Answer.objects.get(id=answer_id)
+
+        response = self.client.post(path, {'choice':answer_id})
+        self.assertEqual(response.get('location'),
+                         reverse('quiz:question', args=(quiz_id, attempt_id,
+                                                        question_id_two)))
+
 
 class StartQuizFormTest(TestCase):
     def setUp(self):
@@ -196,10 +252,12 @@ class StartQuizFormTest(TestCase):
                                 text = "Testing Question 1")
         Answer.objects.create(id=answer_id,
                               question=Question.objects.get(id=question_id),
-                              text="Question 1 Answer A")
+                              text="Question 1 Answer A",
+                              correct_bool=True)
         Answer.objects.create(id=answer_id_two,
                               question=Question.objects.get(id=question_id),
-                              text="Question 1 Answer B")
+                              text="Question 1 Answer B",
+                              correct_bool=False)
 
     #def test_start_quiz_form
 
@@ -216,10 +274,12 @@ class QuizAnswerFormTest(TestCase):
                                 text = "Testing Question 1")
         Answer.objects.create(id=answer_id,
                               question=Question.objects.get(id=question_id),
-                              text="Question 1 Answer A")
+                              text="Question 1 Answer A",
+                              correct_bool=True)
         Answer.objects.create(id=answer_id_two,
                               question=Question.objects.get(id=question_id),
-                              text="Question 1 Answer B")
+                              text="Question 1 Answer B",
+                              correct_bool=False)
 
 
     def test_form_renders_radio_buttons(self):
@@ -237,3 +297,31 @@ class QuizAnswerFormTest(TestCase):
         form = AnswerForm(data=form_data)
         self.assertFalse(form.is_valid())
         self.assertEqual(form.errors['choice'], ["Please select an answer"])
+
+class EndOfQuizPageTest(TestCase):
+    def setUp(self):
+        question_id = 1
+        answer_id = 1
+        answer_id_two = 2
+        quiz_id = 1
+        Quiz.objects.create(id=quiz_id, title = "Testing Quiz 1")
+        Question.objects.create(id=question_id,
+                                quiz=Quiz.objects.get(id=quiz_id),
+                                text = "Testing Question 1")
+        Answer.objects.create(id=answer_id,
+                              question=Question.objects.get(id=question_id),
+                              text="Question 1 Answer A")
+        Answer.objects.create(id=answer_id_two,
+                              question=Question.objects.get(id=question_id),
+                              text="Question 1 Answer B")
+
+    def test_end_of_quiz_uses_template(self):
+        quiz_id = 1 # initial quiz
+        attempt_id = 1
+        path = reverse('quiz:endQuiz', args=(quiz_id,attempt_id))
+        response = self.client.get(path)
+        self.assertTemplateUsed(response, 'quiz/endQuiz.html')
+
+    #def test_end_of_quiz_displays_(self):
+
+
