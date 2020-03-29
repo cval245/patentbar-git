@@ -18,6 +18,8 @@ class IndexView(generic.ListView):
     context_object_name = 'quiz'
 
     def get_queryset(self):
+        print("singing")
+        print(Quiz.objects.order_by('title'))
         """Return all the quizzes"""
         return Quiz.objects.order_by('title')
 
