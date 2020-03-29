@@ -1,0 +1,64 @@
+<html>
+    {% extends 'base.html' %}
+    {% load static %}
+    {% block content %}
+    <h1>
+        Results from Quiz
+    </h1>
+    <body>
+        Details on Results of Quiz
+        {{quiz}}
+        <p>{{time_taken.hours}} hours, {{time_taken.minutes}} minutes,
+            {{time_taken.seconds}} seconds</p>
+        {% for question in questions %}
+        <div class="row d-flex justify-content-center" >
+        <div class="d-flex align-items-start flex-column w-50 mb-3
+                    box_question shadow p-3 mb-5 bg-white rounded">
+            <div class="d-flex justify-content-start">
+                <h4>Question {{question.id}}</h4>
+            </div>
+            <div class="d-flex justify-content-start">
+                {{question.text}}
+            </div>
+
+            <div class="d-flex justify-content-center">
+                {% for selected_answer in selected_answers %}
+                {% if selected_answer.question == question %}
+                <h5>Your Selected Answer</h5>
+            </div>
+
+            <div class="d-flex justify-content-center">
+                {% if selected_answer.correct_bool == True %}
+                <li class="answer_correct">{{selected_answer.text}}</li>
+                <p>You were RIGHT!!!</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-center">
+                {% if selected_answer.correct_bool == False %}
+                <li class="answer_false">{{selected_answer.text}}</li>
+                <p>You were WRONG</p>
+                {% endif %}
+            </div>   
+            {% endif %}
+            {% endfor %}
+
+            <div class="d-flex justify-content-center">
+                <p>The Choices</p>
+            </div>
+                {% for answer in answers %}
+                {% if answer.question == question %}
+            
+            <div class="d-flex justify-content-center">
+                <li>{{answer.text}}</li>
+            </div>
+                {% endif %}
+                {% endfor %}
+        </div>
+        </div>
+            {% endfor %}
+
+    </body>
+    
+    {% endblock content %}
+</html>

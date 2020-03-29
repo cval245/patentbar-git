@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1>
+    Results
+</h1>
+{{ username }}
+<table class="table">
+    <thead>
+    {% for result in quizResults %}
+    <tr>
+        <th>{{ result.user_id }}</th>
+        <th>{{ result.start_time }}</th>
+        <th>{{ result.finish_time }}</th>
+    </tr>
+    {% endfor %}
+    </thead>
+</table>
+<p>Printing</p>
+
+{% endblock content %}

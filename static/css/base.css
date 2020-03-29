@@ -1,0 +1,37 @@
+.answer_correct {
+    color:green
+}
+
+.answer_false {
+    color:red
+}
+
+body {
+    background-color: lightblue;
+}
+
+.box_question {
+    color:orange
+}
+
+.content_container {
+    background-color: lightgreen;
+}
+
+.content_left {
+    background-color:red;
+}
+
+.content_right {
+    background-color:blue;
+}
+
+h1 {
+    color:#C25100;
+}
+
+.navbar_link {
+    width: 300px;
+    padding: 10px;
+}
+

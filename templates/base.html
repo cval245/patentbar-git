@@ -1,0 +1,54 @@
+{% load static %}
+<head>
+    <title> Patent-Bar </title>
+
+
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+</head>
+
+<nav class="navbar navbar-expand-lg navbar-light bg_primary">
+    <p>Navbar</p>
+    <div class="collapse navbar-collapse"  id="naqvbarNav">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class ="navbar_link" href="{% url 'quiz:index' %}">Quiz
+                </a>
+                <a class ="navbar_link" href="{% url 'users:results' %}">
+                    Results</a>
+                <a class ="navbar_link" href="{% url 'users:dashboard' %}">
+                    Account</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+<div class="container-fluid content_container">
+    <div class="row">
+
+        <div class="col-md-2 content_left">
+            {% block content_left %}
+            {% endblock content_left %}
+            <p>LEFT content Communists for LIFE!!!</p>
+        </div>
+
+        <div class="col-md-7 main_content">
+            {% block content %}
+            {% endblock content %}
+            <p> Main content, we are good, sane and Libertarian. No one may
+                steal my porcupine, Misspellings are statements of freedom
+                Do you challenge my Freedom??? The govt is coming for you.
+                You are doomed.  We all are.  The govt is watching you now.
+            </p>
+        </div>
+
+        <div class="col-md-3 content_right">
+            {% block content_right %}
+            {% endblock content_right %}
+            <p>Right content, ooh how exciting, you just think you're
+                sooo right, don't you?
+            </p>
+        </div>
+    </div>
+</div>
