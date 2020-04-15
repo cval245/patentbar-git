@@ -1,0 +1,75 @@
+<html>
+    {% extends 'base.html' %}
+    {% load static %}
+    {% block content %}
+    <h1>
+        Submit your answers
+    </h1>
+    <body>
+        Details on Results of Quiz
+        {{quiz}}
+        {% for question in questions %}
+        <div class="card my-5 shadow p-1" style="width:auto">
+            <div class="card-body">
+                <h5 class="card-title">{{ question.text}}</h5>
+                {% for selected_answer in selected_answers %}
+                {% if selected_answer.question == question %}
+                <h6 class="card-subtitle">Your Selected Answer
+                </h6>
+                
+                <li>{{selected_answer.text}}</li>
+                <div class="card-text">
+
+                <p>The Choices</p>
+                {% for answer in answers %}
+                {% if answer.question == question %}
+                <li>{{answer.text}}</li>
+                {% endif %}
+
+                {% endfor %}
+                </div>
+
+                {% endif %}
+                {% endfor %}
+
+            </div>
+        </div>
+        {% endfor %}
+        <form method="post" >
+            {% csrf_token %}
+            <button
+               type="submit"
+               class="btn btn-primary">{% csrf_token %}Submit Quiz
+            </button>
+        </form>
+    </body>
+    {% endblock content %}
+
+    {% block content_left %}
+    <h5>Questions</h5>
+
+    <div class="progress my-3 p-0.5" style="height: 25px;">
+        <div class="progress-bar progress-bar-striped" role="progressbar"
+             style="width:{{progress}}%"
+             aria-valuenow="{{progress}}" aria-valuemin="0"
+             aria-valuemax="100">
+        </div>
+    </div>
+
+    {% for status_question in questions %}
+    {% if status_question.answered_bool == True %}
+    <a href="{% url 'quiz:question' quiz.id attempt_id status_question.id %}"
+       class="list-group-item list-group-item-action answered-button">
+        Question {{ status_question.id }}</a>
+    {% else %}
+    <div class="list-group">
+        <a href="{% url 'quiz:question' quiz.id attempt_id status_question.id %}"
+           class="list-group-item list-group-item-action">
+            Question {{ quiz_question.id }}</a>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    {% endblock content_left %}
+
+</html>

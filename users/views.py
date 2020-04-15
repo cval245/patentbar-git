@@ -7,6 +7,8 @@ from django.views.generic.edit import FormView
 from users.forms import CustomUserCreationForm
 
 from userProfile.models import QuizAttempt
+from quiz.models import Quiz
+from datetime import timedelta
 # Create your views here.
 
 class DashboardView(LoginRequiredMixin, View):
@@ -35,19 +37,32 @@ class ResultsView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         username = request.user
-        quizResults = QuizAttempt.objects.filter(user=request.user)
-        #quizResults.annotate(Count('finish_time'))
+        quizResults = QuizAttempt.objects.filter(user=request.user,
+                                                 time_taken__gt=timedelta(microseconds=1))
+        from django.db.models import Count
+        latestQuizResults = quizResults.order_by('quiz','-finish_time').distinct('quiz')
+        bestQuizResults = quizResults.order_by('quiz','-score').distinct('quiz')
 
-        from django.db.models import Avg, Count, Min, Sum
-        bob = QuizAttempt.objects.annotate(Count('finish_time')).values()
-        print(bob)
+        return render(request, self.template_name,
+                      {'username':username,
+                       'bestQuizResults':bestQuizResults,
+                       'latestQuizResults':latestQuizResults})
+
+class QuizResultsView(LoginRequiredMixin, TemplateView):
+    login_url = 'login/'
+    redirect_field_name = 'next'
+    template_name = 'users/quizResults.html'
+
+    def get(self, request, *args, **kwargs):
+        username = request.user
+        quiz_id = self.kwargs.pop('pk')
+        quiz = Quiz.objects.get(id=quiz_id)
+        quizResults = QuizAttempt.objects.filter(user=request.user,quiz=quiz,
+                                                 time_taken__gt=timedelta(microseconds=1))
+        quizResults = quizResults.order_by('-finish_time')
+
+
         return render(request, self.template_name,
                       {'username':username, 'quizResults':quizResults})
 
-    def days_hours_minutes_seconds(self, time):
-        days = time.days
-        hours = time.seconds//3600
-        minutes = (time.seconds//60)%60
-        seconds = time.seconds%60
-        return {'days':days, 'hours':hours, 'minutes':minutes,
-                'seconds':seconds}
+    

@@ -6,6 +6,10 @@
     color:red
 }
 
+.answered-button {
+    background-color:lightblue
+}
+
 body {
     background-color: lightblue;
 }

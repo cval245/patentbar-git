@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'userProfile.apps.UserprofileConfig',
     'quiz.apps.QuizConfig',
+    'course.apps.CourseConfig',
+    'navquiz.apps.NavquizConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

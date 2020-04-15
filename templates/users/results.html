@@ -8,14 +8,34 @@
 {{ username }}
 <table class="table">
     <thead>
-    {% for result in quizResults %}
-    <tr>
-        <th>{{ result.user_id }}</th>
-        <th>{{ result.start_time }}</th>
-        <th>{{ result.finish_time }}</th>
-    </tr>
-    {% endfor %}
+        <tr>
+            <th scope="col">Quiz</th>
+            <th scope="col">Time Taken</th>
+            <th scope="col">Latest Score</th>
+            <th scope="col">Highest Score</th>
+            <th scope="col">Link</th>
+        </tr>
     </thead>
+    <tbody>
+        {% for result in latestQuizResults %}
+        <tr>
+            <th>{{ result.quiz }}</th>
+            <th>{{ result.time_taken }}</th>
+            <th>{{ result.score }}</th>
+            <th>{% for bestResult in bestQuizResults %}
+                {% if bestResult.quiz == result.quiz %}
+                {{ bestResult.score }}
+                {% endif %}
+                {% endfor %}
+            </th>
+            <th><a class="link"
+                   href="{% url 'users:quizResults' result.quiz.id %}">
+                see details on quiz attempts
+            </a>
+            </th>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
 <p>Printing</p>
 

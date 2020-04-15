@@ -9,9 +9,9 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
 </head>
 
-<nav class="navbar navbar-expand-lg navbar-light bg_primary">
-    <p>Navbar</p>
-    <div class="collapse navbar-collapse"  id="naqvbarNav">
+<nav class="navbar navbar-expand-md navbar-light bg_primary">
+    <a class="navbar-brand" href="/">Navbar</a>
+    <div class="collapse navbar-collapse"  id="navbarNav">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
                 <a class ="navbar_link" href="{% url 'quiz:index' %}">Quiz
@@ -20,6 +20,12 @@
                     Results</a>
                 <a class ="navbar_link" href="{% url 'users:dashboard' %}">
                     Account</a>
+
+                <a class ="navbar_link" href="{% url 'users:logout' %}">
+                    Logout</a>
+                <a class ="navbar_link" href="{% url 'users:login' %}">
+                    Login</a>
+                <a class="nav-item">Hello {{ username }}</a>
             </li>
         </ul>
     </div>
@@ -43,7 +49,7 @@
             </p>
         </div>
 
-        <div class="col-md-3 content_right">
+        <div class="col-lg-3 content_right">
             {% block content_right %}
             {% endblock content_right %}
             <p>Right content, ooh how exciting, you just think you're

@@ -18,12 +18,3 @@ class QuizStartForm(forms.Form):
     quizzes = forms.ModelChoiceField(queryset=Quiz.objects.all())
 
 
-#class QuizStartForm(forms.Form):
-#    QUERYSET = Quiz.objects.all()
-#    quizzes = forms.ModelChoiceField(queryset=QUERYSET,
-#                                     empty_label="Select Test")
-
-    # def __init__(self, *args, **kwargs):
-    #     quiz = kwargs.pop('quiz', None)
-    #     super(QuizStartForm, self).__init__(*args, **kwargs)
-    #     self.fields['quizzes'].queryset = Quiz.objects.filter(id=quiz)
