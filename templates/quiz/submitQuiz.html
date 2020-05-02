@@ -1,5 +1,5 @@
 <html>
-    {% extends 'base.html' %}
+    {% extends 'base_logged_in.html' %}
     {% load static %}
     {% block content %}
     <h1>
@@ -58,12 +58,12 @@
 
     {% for status_question in questions %}
     {% if status_question.answered_bool == True %}
-    <a href="{% url 'quiz:question' quiz.id attempt_id status_question.id %}"
+    <a href="{% url 'quiz:question' quiz.id attempt.user_attempt_no status_question.id %}"
        class="list-group-item list-group-item-action answered-button">
         Question {{ status_question.id }}</a>
     {% else %}
     <div class="list-group">
-        <a href="{% url 'quiz:question' quiz.id attempt_id status_question.id %}"
+        <a href="{% url 'quiz:question' quiz.id attempt.user_attempt_no status_question.id %}"
            class="list-group-item list-group-item-action">
             Question {{ quiz_question.id }}</a>
     </div>
@@ -71,5 +71,21 @@
     {% endfor %}
 
     {% endblock content_left %}
+    {% block content_right %}
+    {% if attempt.submitted_bool == False %}
+    <div id="timer">
 
+        {{value|json_script:"start_time"}}
+        <script type="text/javascript">
+
+         var bob = "{{ attempt.start_time.timestamp }}";
+         var start = Date.now()/1000
+         var diff = start - bob
+
+         $("#timer").countdown({since: -diff , format:'MS',
+                                description:'Time Taken'});
+        </script>
+    </div>
+    {% endif %}
+    {% endblock content_right %}
 </html>

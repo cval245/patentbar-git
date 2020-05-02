@@ -1,3 +1,25 @@
 <html>
     {% extends 'base.html' %}
+
+    {% block navbar_left %}
+    <a class ="navbar_link" href="{% url 'course:main_course' %}">Courses
+    </a>
+
+    <a class ="navbar_link" href="{% url 'quiz:index' %}">Quiz
+    </a>
+    <a class ="navbar_link"
+       href="{% url 'navquiz:startNavQuiz' %}">NavQuiz
+    </a>
+    <a class ="navbar_link" href="{% url 'users:results' %}">
+        Results</a>
+    <a class ="navbar_link" href="{% url 'users:dashboard' %}">
+        Account</a>
+    {% endblock navbar_left %}
+
+    {% block navbar_right %}
+    <a class="nav-item">Hello {{ username }}</a>
+    <a class ="navbar_link mr" href="{% url 'users:logout' %}">
+        Logout</a>
+
+    {% endblock navbar_right %}
 </html>

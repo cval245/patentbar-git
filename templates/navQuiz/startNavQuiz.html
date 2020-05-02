@@ -7,18 +7,39 @@
         Start the Navigation Quiz
     </h1>
     <body>
-        Details on Quiz
+        <p>
+            The goal of the navigation quizzess is to improve your
+            familiarity with the MPEP and decrease your look-up time.
+
+            Please refer to the
+            <a href="https://www.uspto.gov/web/offices/pac/mpep/index.html">MPEP</a>
+        </p>
+        <p>
+            Note that this version of the MPEP only lets you search
+            in each chapter (like the exam).  Feel free to search in
+            each chapter.  Do not use the completely searchable
+            version of the MPEP for this quiz, because then you
+            will not be adequately prepared for the actual exam.  
+        </p>
+        <p>
+            This is a timed quiz.  Your final score will be a
+            composite
+            of the time taken and your accuracy.  Your goal should
+            be to
+            spend less than 60 seconds looking up an answer.  This
+            is an
+            ambitious goal, initially it will take you much longer.
+        </p>
     </body>
     <form method="post" >
         {% csrf_token %}
         <button
             type="submit"
-            class="btn btn-primary">{% csrf_token %}Submit Quiz
+            class="btn btn-primary">{% csrf_token %}Start NavQuiz
         </button>
     </form>
 
         {% endblock content %}
 
-        
 </html>
 

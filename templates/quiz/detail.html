@@ -9,12 +9,14 @@
     <body>
         Details on Quiz
     </body>
-    <form method="post">
+    <form method="post" >
         {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Start Quiz" name="start">
+        <button
+            type="submit"
+            class="btn btn-primary">{% csrf_token %}Start Quiz
+        </button>
+    </form>
 
         {% endblock content %}
 
-        
 </html>

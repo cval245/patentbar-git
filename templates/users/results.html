@@ -1,5 +1,4 @@
-{% extends 'base.html' %}
-
+{% extends 'base_logged_in.html' %}
 {% block content %}
 
 <h1>
@@ -10,7 +9,7 @@
     <thead>
         <tr>
             <th scope="col">Quiz</th>
-            <th scope="col">Time Taken</th>
+            <th scope="col">Latest Time Taken</th>
             <th scope="col">Latest Score</th>
             <th scope="col">Highest Score</th>
             <th scope="col">Link</th>
@@ -20,7 +19,17 @@
         {% for result in latestQuizResults %}
         <tr>
             <th>{{ result.quiz }}</th>
-            <th>{{ result.time_taken }}</th>
+            <th>
+                {% if result.list_time_taken.hours != 0 %}
+                {{ result.list_time_taken.hours }} hours
+                {% endif %}
+                {% if result.list_time_taken.minutes != 0 %}
+                {{ result.list_time_taken.minutes }} minutes
+                {% endif %}
+                {% if result.list_time_taken.seconds != 0 %}
+                {{ result.list_time_taken.seconds }} seconds
+                {% endif %}
+            </th>
             <th>{{ result.score }}</th>
             <th>{% for bestResult in bestQuizResults %}
                 {% if bestResult.quiz == result.quiz %}
@@ -37,6 +46,37 @@
         {% endfor %}
     </tbody>
 </table>
-<p>Printing</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Latest Time Taken</th>
+            <th scope="col">Latest Score</th>
+            <th scope="col">Highest Score</th>
+            <th scope="col">Link</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th>
+                {% if latestNavQuizResult.list_time_taken.hours != 0 %}
+                {{ latestNavQuizResult.list_time_taken.hours }} hours
+                {% endif %}
+                {% if latestNavQuizResult.list_time_taken.minutes != 0 %}
+                {{ latestNavQuizResult.list_time_taken.minutes }} minutes
+                {% endif %}
+                {% if latestNavQuizResult.list_time_taken.seconds != 0 %}
+                {{ latestNavQuizResult.list_time_taken.seconds }} seconds
+                {% endif %}
+            </th>
+            <th>{{ latestNavQuizResult.score }}</th>
+            <th>{{ bestNavQuizResult.score }}</th>
+            <th><a class="link"
+                   href="{% url 'users:navQuizResults' %}">
+                see details on quiz attempts
+            </a>
+            </th>
+        </tr>
+    </tbody>
+</table>
 
 {% endblock content %}

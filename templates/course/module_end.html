@@ -1,0 +1,16 @@
+{% extends 'course/module.html' %}
+
+{% block buttons %}
+<a role="button" href="{% url 'course:module' course.id previous_module.id %}"
+   class="btn btn-primary">Back: {{previous_module}}
+</a>
+
+
+<a role="button" href="{% url 'users:dashboard' %}"
+   class="btn btn-primary">Return to Dashboard
+</a>
+<a role="button" href="{% url 'course:main_course' %}"
+   class="btn btn-primary">Return to courses
+</a>
+
+{% endblock buttons %}

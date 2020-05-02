@@ -4,16 +4,24 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.views import generic
+from django.utils import timezone
 
-from .forms import  AnswerForm, QuizStartForm
+from .forms import  AnswerForm
 from .models import Answer, Question, Quiz
 from userProfile.models import AnswersSubmitted, QuizAttempt
 from datetime import datetime
 # Create your views here.
 
-def HomePageView(request):
-    template_name = 'homePage.html'
-    return render(request, template_name)
+class HomePageView(generic.TemplateView):
+    template_logged_in = 'homePage_logged_in.html'
+    template_logged_out = 'homePage_logged_out.html'
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return render(request, self.template_logged_in,
+                          {'username':request.user})
+        else:
+            return render(request, self.template_logged_out)
 
 class IndexView(LoginRequiredMixin, generic.ListView):
     template_name = 'quiz/index.html'
@@ -28,32 +36,33 @@ class IndexView(LoginRequiredMixin, generic.ListView):
 class QuizDetailView(LoginRequiredMixin, generic.DetailView):
     template_name = 'quiz/detail.html'
     model = Quiz
-    form_class = QuizStartForm
     login_url = '/account/login/'
     redirect_field_name = 'redirect_to'
 
     def get(self, request, *args, **kwargs):
-        form = self.form_class(request.GET or None)
-        return render(request, self.template_name, {'form':form})
+        return render(request, self.template_name, {'username':request.user})
+
 
     def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST)
         finish_time=datetime(2000, 1, 1, 0, 0, 0, 0) # default placeholder
         score=0 #default placeholder
-        if form.is_valid():
-            quiz = form.cleaned_data['quizzes']
-            submission = QuizAttempt.objects.create(user=request.user,
-                                                    quiz=quiz,
-                                                    finish_time=finish_time,
-                                                    score=score)
-            first_question=Question.objects.filter(quiz=quiz).first()
-            return HttpResponseRedirect(
+        quiz_id = kwargs.pop('pk')
+        quiz = Quiz.objects.get(id=quiz_id)
+
+        attempt=QuizAttempt.objects.create(user=request.user, quiz=quiz,
+                                           finish_time=timezone.now(),
+                                           score=score, user_attempt_no=0)
+        # get next user_attempt_no
+        next_user_attempt_no = attempt.get_next_user_attempt_no(request.user,
+                                                                quiz)
+        attempt.user_attempt_no = next_user_attempt_no
+        attempt.save()
+        first_question=Question.objects.filter(quiz=quiz).first()
+        return HttpResponseRedirect(
                 reverse('quiz:question',
                         kwargs={'question_id':first_question.id,
                                 'pk':quiz.id,
-                                'attempt':submission.id}))
-        return HttpResponseRedirect('/quiz/')
-
+                                'user_attempt_no':next_user_attempt_no}))
 
 class QuestionView(LoginRequiredMixin, generic.CreateView):
     form_class = AnswerForm
@@ -62,21 +71,15 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
     login_url = '/account/login/'
     redirect_field_name = 'redirect_to'
 
-    def calculateProgress(self, user, quiz_questions, attempt):
-        answered_questions=AnswersSubmitted.objects.filter(user=user).filter(attempt=attempt).aggregate(Count('question'))
-        total_questions=quiz_questions.aggregate(Count('id'))
-        num_total_questions=total_questions.get('id__count')
-        num_answered_questions=answered_questions.get('question__count')
-        progress = num_answered_questions / num_total_questions * 100
-        return progress
-
     def get(self, request, *args, **kwargs):
         question_id = self.kwargs.pop('question_id')
         quiz_id = self.kwargs.pop('pk')
         quiz = Quiz.objects.get(id=quiz_id)
         quiz_questions=Question.objects.filter(quiz=quiz)
-        attempt_id = self.kwargs.pop('attempt')
-        attempt = QuizAttempt.objects.get(id=attempt_id)
+        user_attempt_no = self.kwargs.pop('user_attempt_no')
+        attempt = QuizAttempt.objects.get(user=request.user,
+                                          quiz=quiz,
+                                          user_attempt_no=user_attempt_no)
 
         question = Question.objects.get(id=question_id)
         answer_selected = AnswersSubmitted.objects.filter(question=question,
@@ -85,7 +88,7 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
         # After the final question is answered, does a passthrough to
         # look for unanswered questions. If there are none, it moves to
         # the submitquiz section
-        results = AnswersSubmitted.objects.filter(question__in=quiz_questions,
+        results =AnswersSubmitted.objects.filter(question__in=quiz_questions,
                                                   attempt=attempt)
         answered_questions = results.values('question')
         unanswered_questions = quiz_questions.exclude(
@@ -106,20 +109,25 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
         else:
             form = self.form_class(request.GET or None, question=question_id)
 
-        progress=self.calculateProgress(request.user, quiz_questions,attempt)
+        #progress=self.calculateProgress(request.user, quiz_questions,attempt)
+        progress = attempt.progress(request.user, quiz)
         return render(request, self.template_name,
                       {'form':form, 'question':question,
+                       'attempt':attempt,
                        'status_questions':status_questions,
-                       'quiz':quiz,
+                       'quiz':quiz, 'username':request.user,
                        'answered_questions':answered_questions,
-                       'attempt_id':attempt_id, 'progress':progress})
+                       'attempt':attempt, 'progress':progress})
 
     def post(self, request, *args, **kwargs):
         question_id = self.kwargs.pop('question_id')
         quiz_id = self.kwargs.pop('pk')
-        attempt_id = self.kwargs.pop('attempt')
+        quiz = Quiz.objects.get(id=quiz_id)
+        user_attempt_no = self.kwargs.pop('user_attempt_no')
 
-        ATTEMPT = QuizAttempt.objects.get(id=attempt_id)
+        attempt = QuizAttempt.objects.get(user=request.user,
+                                          quiz=quiz,
+                                          user_attempt_no=user_attempt_no)
         next_question_id = question_id + 1
         quiz = Quiz.objects.get(id=quiz_id)
         quiz_questions=Question.objects.filter(quiz=quiz)
@@ -129,72 +137,97 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
         if form.is_valid():
             ANSWER = form.cleaned_data['choice']
 
-            if ATTEMPT.submitted_bool == False:
+            if attempt.submitted_bool == False:
 
                 # determine if user already entered an answer for that questions
                 # if so, then update the old answer.
                 if AnswersSubmitted.objects.filter(user=request.user,
                                                    question=QUESTION,
-                                                   attempt=ATTEMPT).exists():
-                    old_answer=AnswersSubmitted.objects.filter(user=request.user,
-                                                               question=QUESTION,
-                                                               attempt=ATTEMPT)
-                    new_answer=old_answer.update(answer=ANSWER)
+                                                   attempt=attempt).exists():
+                    old_answer=AnswersSubmitted.objects.get(
+                        user=request.user,
+                        question=QUESTION,
+                        attempt=attempt)
+                    old_answer.answer = ANSWER
+                    old_answer.save()
+                    submission=old_answer
                 else:
-                    submission=AnswersSubmitted.objects.create(user=request.user,
-                                                               question=QUESTION,
-                                                               answer=ANSWER,
-                                                               attempt=ATTEMPT)
-            # Determine if the next question is there, then move to it
-            # After the final question is answered, does a passthrough to
-            # look for unanswered questions. If there are none, it moves to
-            # the submitquiz section
-            results = AnswersSubmitted.objects.filter(question__in=quiz_questions,
-                                                      attempt=ATTEMPT)
-            answered_questions = results.values('question')
-            unanswered_questions = quiz_questions.exclude(id__in=answered_questions)
+                    submission=AnswersSubmitted.objects.create(
+                        user=request.user,
+                        question=QUESTION,
+                        answer=ANSWER,
+                        attempt=attempt)
+                # Determine if the next question is there, then move to it
+                # After the final question is answered, does a passthrough to
+                # look for unanswered questions. If there are none, it moves to
+                # the submitquiz section
 
-            if quiz_questions.filter(id=next_question_id):
-                next_question=quiz_questions.get(id=next_question_id)
-                return HttpResponseRedirect(
-                    reverse('quiz:question',
-                            kwargs={'question_id':next_question_id,
-                                    'pk':quiz.id, 'attempt':attempt_id}))
+                # if this is the last quiz navigate to submitquiz view
+                if submission.isLastUnAnsweredQuestion():
 
-            elif unanswered_questions.count() > 0:
-
-                #find the earliest of the unanswered questions
-                # redirect to it.
-                first_question=unanswered_questions.order_by('id')[:1].get()
-
-                return HttpResponseRedirect(
-                    reverse('quiz:question',
-                            kwargs={'question_id':first_question.id,
-                                    'pk':quiz.id, 'attempt':attempt_id}))
-
+                    # calculate and store score value
+                    attempt.calculate_and_set_score()
+                    return HttpResponseRedirect(
+                        reverse('quiz:submitQuiz',
+                                kwargs={'pk':quiz.id,
+                                        'user_attempt_no':attempt.user_attempt_no}))
+                # otherwise navigate to the next question
+                else:
+                    next_question = submission.getNextQuestion()
+                    print('\n\n\n\n\n\n', next_question, '\n\n\n\n')
+                    return HttpResponseRedirect(
+                        reverse('quiz:question',
+                                kwargs={'question_id':next_question.id, 'pk':quiz.id,
+                                        'user_attempt_no':attempt.user_attempt_no}))
             else:
-                answers = Answer.objects.filter(question__in=quiz_questions)
-                results = AnswersSubmitted.objects.filter(question__in=quiz_questions,
-                                                          attempt=ATTEMPT)
-                selected_answers = Answer.objects.filter(answerssubmitted__in=results)
-                # determine the score the percentage of answers correct
-                correct_answers=selected_answers.filter(correct_bool=True).count()
-                all_answers=selected_answers.count()
-                score=correct_answers / all_answers *100
-                QuizAttempt.objects.filter(id=attempt_id).update(score=score)
-
                 return HttpResponseRedirect(
-                    reverse('quiz:submitQuiz', kwargs={'pk':quiz.id,
-                                                    'attempt':attempt_id}))
-        return HttpResponseRedirect('/quiz/')
+                    reverse('quiz:submitQuiz',
+                            kwargs={'pk':quiz.id,
+                                'user_attempt_no':attempt.user_attempt_no}))
+ 
+            # results = AnswersSubmitted.objects.filter(
+            #     question__in=quiz_questions,
+            #     attempt=attempt)
+            # answered_questions = results.values('question')
+            # unanswered_questions = quiz_questions.exclude(id__in=answered_questions)
 
-    def days_hours_minutes_seconds(self, time):
-        days = time.days
-        hours = time.seconds//3600
-        minutes = (time.seconds//60)%60
-        seconds = time.seconds%60
-        return {'days':days, 'hours':hours, 'minutes':minutes,
-                'seconds':seconds}
+
+            # if quiz_questions.filter(id=next_question_id):
+            #     next_question=quiz_questions.get(id=next_question_id)
+            #     return HttpResponseRedirect(
+            #         reverse('quiz:question',
+            #         kwargs={'question_id':next_question_id, 'pk':quiz.id,
+            #                 'user_attempt_no':attempt.user_attempt_no}))
+
+            # elif unanswered_questions.count() > 0:
+
+            #     #find the earliest of the unanswered questions
+            #     # redirect to it.
+            #     first_question=unanswered_questions.order_by('id')[:1].get()
+
+            #     return HttpResponseRedirect(
+            #         reverse('quiz:question',
+            #                 kwargs={'question_id':first_question.id,
+            #                         'pk':quiz.id,
+            #                     'user_attempt_no':attempt.user_attempt_no}))
+
+            # else:
+            #     answers = Answer.objects.filter(question__in=quiz_questions)
+            #     results = AnswersSubmitted.objects.filter(
+            #         question__in=quiz_questions,
+            #         attempt=attempt)
+            #     selected_answers = Answer.objects.filter(answerssubmitted__in=results)
+            #     # determine the score the percentage of answers correct
+            #     correct_answers=selected_answers.filter(correct_bool=True).count()
+            #     all_answers=selected_answers.count()
+            #     score=correct_answers / all_answers *100
+            #     QuizAttempt.objects.filter(id=attempt.id).update(score=score)
+
+            #     return HttpResponseRedirect(
+            #         reverse('quiz:submitQuiz',
+            #                 kwargs={'pk':quiz.id,
+            #                     'user_attempt_no':attempt.user_attempt_no}))
+        return HttpResponseRedirect('/quiz/')
 
 
 class SubmitQuizView(LoginRequiredMixin, generic.TemplateView):
@@ -202,20 +235,13 @@ class SubmitQuizView(LoginRequiredMixin, generic.TemplateView):
     redirect_field_name = 'redirect_to'
     template_name='quiz/submitQuiz.html'
 
-    def calculateProgress(self, user, quiz_questions, attempt):
-        answered_questions=AnswersSubmitted.objects.filter(user=user).filter(attempt=attempt).aggregate(Count('question'))
-        total_questions=quiz_questions.aggregate(Count('id'))
-        num_total_questions=total_questions.get('id__count')
-        num_answered_questions=answered_questions.get('question__count')
-        progress = num_answered_questions / num_total_questions * 100
-        return progress
-
     def get(self, request, *args, **kwargs):
         #The goal is to display the results of that attempt of the quiz
         quiz_id = self.kwargs.pop('pk')
-        attempt_id = self.kwargs.pop('attempt')
+        user_attempt_no = self.kwargs.pop('user_attempt_no')
         quiz = Quiz.objects.get(id=quiz_id)
-        attempt = QuizAttempt.objects.get(id=attempt_id)
+        attempt = QuizAttempt.objects.get(user=request.user,quiz=quiz,
+                                          user_attempt_no=user_attempt_no)
         questions = Question.objects.filter(quiz=quiz)
 
         answers = Answer.objects.filter(question__in=questions)
@@ -235,37 +261,32 @@ class SubmitQuizView(LoginRequiredMixin, generic.TemplateView):
         status_questions = answered_questions.union(unanswered_questions).order_by('id')
 
         # report the score and the time_taken
-        progress=self.calculateProgress(request.user, questions, attempt)
+        progress=attempt.progress(request.user, quiz)
         return render(request, self.template_name,
                       {'quiz':quiz,
-                       'results':results, 'attempt_id':attempt_id,
+                       'results':results, 'attempt':attempt,
                        'questions':status_questions, 'answers':answers,
                        'selected_answers':selected_answers,
-                       'progress':progress
+                       'progress':progress, 'username':request.user
                        })
 
     def post(self, request, *args, **kwargs):
         quiz_id = self.kwargs.pop('pk')
-        attempt_id = self.kwargs.pop('attempt')
+        user_attempt_no = self.kwargs.pop('user_attempt_no')
 
         # determine the time taken
-        last_time=QuizAttempt.objects.get(id=attempt_id).finish_time
-        start_time=QuizAttempt.objects.get(id=attempt_id).start_time
-        time_taken=last_time-start_time
-        QuizAttempt.objects.filter(id=attempt_id).update(finish_time=datetime.now())
-        last_time=QuizAttempt.objects.get(id=attempt_id).finish_time
-        start_time=QuizAttempt.objects.get(id=attempt_id).start_time
-        time_taken=last_time-start_time
+        attempt = QuizAttempt.objects.get(user=request.user,quiz=quiz_id,
+                                          user_attempt_no=user_attempt_no)
+        attempt.finish_time=timezone.now()
+        attempt.submitted_bool=True
+        attempt.save()
 
-        QuizAttempt.objects.filter(id=attempt_id).update(time_taken=time_taken)
-        # update submitted_bool to True
-        QuizAttempt.objects.filter(id=attempt_id).update(submitted_bool=True)
+        attempt.time_taken=attempt.finish_time - attempt.start_time
+        attempt.save()
 
-
-        print("potatoes are not green, unless bad ")
         return HttpResponseRedirect(
             reverse('quiz:endQuiz', kwargs={'pk':quiz_id,
-                                               'attempt':attempt_id}))
+                                'user_attempt_no':attempt.user_attempt_no}))
 
 
 class EndOfQuizView(LoginRequiredMixin, generic.TemplateView):
@@ -276,9 +297,10 @@ class EndOfQuizView(LoginRequiredMixin, generic.TemplateView):
     def get(self, request, *args, **kwargs):
         #The goal is to display the results of that attempt of the quiz
         quiz_id = self.kwargs.pop('pk')
-        attempt_id = self.kwargs.pop('attempt')
+        user_attempt_no = self.kwargs.pop('user_attempt_no')
         quiz = Quiz.objects.get(id=quiz_id)
-        attempt = QuizAttempt.objects.get(id=attempt_id)
+        attempt = QuizAttempt.objects.get(user=request.user, quiz=quiz,
+                                          user_attempt_no=user_attempt_no)
         questions = Question.objects.filter(quiz=quiz)
 
         answers = Answer.objects.filter(question__in=questions)
@@ -287,20 +309,10 @@ class EndOfQuizView(LoginRequiredMixin, generic.TemplateView):
         selected_answers=Answer.objects.filter(answerssubmitted__in=results)
         # report the score and the time_taken
         score= attempt.score
-        time_taken=self.days_hours_minutes_seconds(attempt.time_taken)
 
         return render(request, self.template_name,
-                      {'quiz':quiz, 'time_taken':time_taken,
-                       'results':results,
+                      {'quiz':quiz, 'attempt':attempt,
+                       'results':results, 'username':request.user,
                        'questions':questions, 'answers':answers,
                        'selected_answers':selected_answers,
                        'score':score})
-    
-    def days_hours_minutes_seconds(self, time):
-        days = time.days
-        hours = time.seconds//3600
-        minutes = (time.seconds//60)%60
-        seconds = time.seconds%60
-        return {'days':days, 'hours':hours, 'minutes':minutes,
-                'seconds':seconds}
-    

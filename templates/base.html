@@ -1,60 +1,75 @@
 {% load static %}
 <head>
-    <title> Patent-Bar </title>
-
-
+    <title> Ogden Patent Bar Prep </title>
     <link rel="stylesheet"
           href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href=" {% static 'js/css/jquery.countdown.css' %}">
+    <script type="text/javascript" src= "{% static 'js/js/jquery.plugin.js' %}">
+
+    </script>
+    <script type="text/javascript"
+            src="{% static 'js/js/jquery.countdown.js' %}"></script>
 </head>
 
-<nav class="navbar navbar-expand-md navbar-light bg_primary">
-    <a class="navbar-brand" href="/">Navbar</a>
-    <div class="collapse navbar-collapse"  id="navbarNav">
+<nav class="navbar sticky-top navbar-expand-md navbar-light navbar-custom">
+    <a class="navbar-brand text-dark" href="/">Ogden Prep</a>
+    <div class="collapse navbar-collapse W-100 order-1 order-md-0 dual-collapse2"  id="navbarNav">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item active">
-                <a class ="navbar_link" href="{% url 'quiz:index' %}">Quiz
-                </a>
-                <a class ="navbar_link" href="{% url 'users:results' %}">
-                    Results</a>
-                <a class ="navbar_link" href="{% url 'users:dashboard' %}">
-                    Account</a>
-
-                <a class ="navbar_link" href="{% url 'users:logout' %}">
-                    Logout</a>
-                <a class ="navbar_link" href="{% url 'users:login' %}">
-                    Login</a>
-                <a class="nav-item">Hello {{ username }}</a>
+                {% block navbar_left %}
+                {% endblock navbar_left %}
             </li>
         </ul>
     </div>
+    <div class="collapse navbar-collapse W-100 order-2 order-md-0 dual-collapse2">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item active">
+                {% block navbar_right %}
+                <a class ="navbar_link" href="{% url 'users:login' %}">
+                    Login</a>
+                <a class ="navbar_link" href="{% url 'users:signup' %}">
+                    Signup</a>
+                {% endblock navbar_right %}
+            </li>
+        </ul>
+    </div>
+
 </nav>
+
 <div class="container-fluid content_container">
     <div class="row">
-
-        <div class="col-md-2 content_left">
+        <div class="col-md-3 col-lg-2 content_left">
             {% block content_left %}
             {% endblock content_left %}
-            <p>LEFT content Communists for LIFE!!!</p>
         </div>
 
-        <div class="col-md-7 main_content">
+        <div class="col-md-9 col-lg-7 main_content">
             {% block content %}
             {% endblock content %}
-            <p> Main content, we are good, sane and Libertarian. No one may
-                steal my porcupine, Misspellings are statements of freedom
-                Do you challenge my Freedom??? The govt is coming for you.
-                You are doomed.  We all are.  The govt is watching you now.
-            </p>
         </div>
 
-        <div class="col-lg-3 content_right">
+        <div class="col-lg-3 col-md-none d-none d-lg-block content_right">
             {% block content_right %}
             {% endblock content_right %}
-            <p>Right content, ooh how exciting, you just think you're
-                sooo right, don't you?
-            </p>
         </div>
     </div>
 </div>
+<footer class="page-footer font-small blue pt-4">
+    <div class="container-fluid text-center text-md-left">
+        <div class="row">
+            <div class="col-md-6 mt-md-0 mt-3">
+                <h5>
+                    Footer Content
+                </h5>
+            </div>
+        </div>
+    </div>
+    <div class="footer-copyright text-center py-3">
+        {% now "Y" as current_year %}
+        Copyright {{ current_year }}
+    </div>
+</footer>

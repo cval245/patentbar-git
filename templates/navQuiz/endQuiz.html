@@ -1,57 +1,108 @@
 <html>
-    {% extends 'base.html' %}
+    {% extends 'base_logged_in.html' %}
     {% load static %}
+    {% block content_left %}
+    <p> so so </p>
+    {% endblock content_left %}
     {% block content %}
     <h1>
-        Results from Quiz
+        Results from NavQuiz
     </h1>
     <body>
-        Details on Results of Quiz
-        {{quiz}}
-        <p>{{time_taken.hours}} hours, {{time_taken.minutes}} minutes,
-            {{time_taken.seconds}} seconds</p>
-        <p> Score = {{score}}%</p>
-        {% for question in questions %}
+        <div class="card my-5 shadow p-1" style="width:auto">
+            <div class="card-body">
+                <h4 class="card-title">
+                    Summary Results of NavQuiz
+                </h4>
+                <div class="card-text">
+                    <p> Total Time Taken =
+                        {% if attempt.list_time_taken.hours != 0 %}
+                        {{ attempt.list_time_taken.hours }} hours
+                        {% endif %}
+                        {% if attempt.list_time_taken.minutes != 0 %}
+                        {{ attempt.list_time_taken.minutes }} minutes
+                        {% endif %}
+                        {% if attempt.list_time_taken.seconds != 0 %}
+                        {{ attempt.list_time_taken.seconds }} seconds
+                        {% endif %}
+                    </p>
+                    <p> Average time = {{attempt.avg_time}} seconds </p>
+                    <div class="progress my-3 p-0.5"
+                         style="height: 25px;">
+                        <div class="progress-bar progress-bar"
+                             role="progressbar"
+                             style="width:{{attempt.avg_time}}%"
+                             aria-valuenow="{{attempt.avg_time}}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+
+                    <p> Percent Correct = {{attempt.score}}%</p>
+                    <div class="progress my-3 p-0.5"
+                         style="height: 25px;">
+                        <div class="progress-bar progress-bar"
+                             role="progressbar"
+                             style="width:{{attempt.score}}%"
+                             aria-valuenow="{{attempt.score}}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <p> Combined Score {{attempt.calc_composite_score}}%
+                    </p>
+                    <div class="progress my-3 p-0.5"
+                         style="height: 25px;">
+                    <div class="progress-bar progress-bar"
+                         role="progressbar"
+                         style="width:{{attempt.calc_composite_score}}%"
+                         aria-valuenow="{{attempt.calc_composite_score}}"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                    </div>
+                    </div>
+                    <a role="button" href="{% url 'users:dashboard' %}"
+                       class="btn btn-primary">Return to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% for question in question_attempts %}
 
         <div class="card my-5 shadow p-1" style="width:auto">
             <div class="card-body">
-                <h5 class="card-title">{{ question.text}}</h5>
-                {% for selected_answer in selected_answers %}
-                {% if selected_answer.question == question %}
-                <h6 class="card-subtitle">Your Selected Answer
-                </h6>
-                
+                <h5 class="card-title">{{question.question.text}}</h5>
 
                 <div class="card-text">
-
-                {% if selected_answer.correct_bool == True %}
+                    <p> Time Taken =
+                        {% if question.list_time_taken.hours != 0 %}
+                        {{ question.list_time_taken.hours }} hours
+                        {% endif %}
+                        {% if question.list_time_taken.minutes != 0 %}
+                        {{ question.list_time_taken.minutes }} minutes
+                        {% endif %}
+                        {% if question.list_time_taken.seconds != 0 %}
+                        {{ question.list_time_taken.seconds }} seconds
+                        {% endif %}
+                    </p>
+                    {% if question.correct_bool == True %}
                     <p class="answer_correct">Correct!</p>
-                    <li class="answer_correct">{{selected_answer.text}}</li>
-                {% endif %}
+                    <li class="answer_correct">{{question.article_submitted}}
+                    </li>
+                    {% endif %}
 
-                {% if selected_answer.correct_bool == False %}
+                    {% if question.correct_bool == False %}
                     <p class="answer_false">Incorrect</p>
-                    <li class="answer_false">{{selected_answer.text}}</li>
-                {% endif %}
-
-                <p>The Choices</p>
-                {% for answer in answers %}
-                {% if answer.question == question %}
-                
-                {% if answer.correct_bool == True %}
-                <li><b>{{answer.text}}</b></li>
-                {% else %}
-                <li>{{answer.text}}</li>
-
-                {% endif %}
-
-                {% endif %}
-                {% endfor %}
+                    <li class="answer_false">{{question.article_submitted}}
+                    </li>
+                    <p>The correct answer was</p>
+                    {% for answer in correct_answers %}
+                    {% if answer.question == question.question %}
+                    <li>{{answer.mpep_location}}</li>
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
                 </div>
-
-                {% endif %}
-                {% endfor %}
-
             </div>
         </div>
         {% endfor %}

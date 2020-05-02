@@ -18,9 +18,10 @@ from django.urls import path, include
 from quiz import views
 
 urlpatterns = [
-    path('', views.HomePageView, name='home'),
+    path('', views.HomePageView.as_view(), name='home'),
     path('admin/', admin.site.urls),
     path('quiz/', include('quiz.urls')),
     path('account/', include('users.urls')),
-    path('navquiz/', include('navquiz.urls'))
+    path('navquiz/', include('navquiz.urls')),
+    path('course/', include('course.urls')),
 ]

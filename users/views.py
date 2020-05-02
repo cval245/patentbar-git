@@ -6,7 +6,7 @@ from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 from users.forms import CustomUserCreationForm
 
-from userProfile.models import QuizAttempt
+from userProfile.models import QuizAttempt, NavQuizAttempt
 from quiz.models import Quiz
 from datetime import timedelta
 # Create your views here.
@@ -17,8 +17,11 @@ class DashboardView(LoginRequiredMixin, View):
     template_name = 'registration/dashboard.html'
 
     def get(self, request, *args, **kwargs):
-        username = request.user
-        return render(request, self.template_name, {'username': username})
+        high_attempt = NavQuizAttempt.objects.filter(user=request.user).order_by('-score').first()
+        latest_attempt = NavQuizAttempt.objects.filter(user=request.user).order_by('-finish_time').first()
+        return render(request, self.template_name, {'username': request.user,
+                                                    'high_attempt': high_attempt,
+                                                'latest_attempt':latest_attempt})
 
 
 class SignUpView(FormView):
@@ -37,16 +40,24 @@ class ResultsView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         username = request.user
+
+        # Get Quiz Results
         quizResults = QuizAttempt.objects.filter(user=request.user,
-                                                 time_taken__gt=timedelta(microseconds=1))
-        from django.db.models import Count
+                                                 submitted_bool=True)
         latestQuizResults = quizResults.order_by('quiz','-finish_time').distinct('quiz')
         bestQuizResults = quizResults.order_by('quiz','-score').distinct('quiz')
+        # Get NavQuiz Results
+        NavQuizResults=NavQuizAttempt.objects.filter(user=request.user,
+                                                    submitted_bool=True)
+        latestNavQuizResult =NavQuizResults.order_by('-finish_time').first()
+        bestNavQuizResult = NavQuizResults.order_by('-score').first()
 
         return render(request, self.template_name,
                       {'username':username,
                        'bestQuizResults':bestQuizResults,
-                       'latestQuizResults':latestQuizResults})
+                       'latestQuizResults':latestQuizResults,
+                       'bestNavQuizResult':bestNavQuizResult,
+                       'latestNavQuizResult':latestNavQuizResult})
 
 class QuizResultsView(LoginRequiredMixin, TemplateView):
     login_url = 'login/'
@@ -65,4 +76,16 @@ class QuizResultsView(LoginRequiredMixin, TemplateView):
         return render(request, self.template_name,
                       {'username':username, 'quizResults':quizResults})
 
-    
+class NavQuizResultsView(LoginRequiredMixin, TemplateView):
+    login_url = 'login/'
+    redirect_field_name = 'next'
+    template_name = 'users/navQuizResults.html'
+
+    def get(self, request, *args, **kwargs):
+        username = request.user
+        navQuizResults = NavQuizAttempt.objects.filter(user=request.user,
+                                                       submitted_bool=True)
+        navQuizResults = navQuizResults.order_by('-finish_time')
+
+        return render(request, self.template_name,
+                      {'username':username, 'navQuizResults':navQuizResults})

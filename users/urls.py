@@ -12,4 +12,7 @@ urlpatterns = [
     path('results/', views.ResultsView.as_view(), name='results'),
     path('results/quiz=<int:pk>/', views.QuizResultsView.as_view(),
          name='quizResults'),
+    path('results/navquiz/', views.NavQuizResultsView.as_view(),
+         name='navQuizResults'),
+
 ]

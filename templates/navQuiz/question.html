@@ -1,8 +1,9 @@
+<!doctype html>
 <html>
-    {% extends 'base.html' %}
-    {% block content %}
+    {% extends 'base_logged_in.html' %}
+    {% load static %}
 
-    
+    {% block content %}
     <div class="card shadow p-1 my-5 " style="width:auto">
         <div class="card-body">
             <h5 class="card-title">{{ question.text}}</h5>
@@ -10,13 +11,12 @@
                 {% csrf_token %}
                 {{ form.as_p }}
                 <input type="submit" value="Submit">
-
         </div>
     </div>
+    
     {% endblock content %}
 
     {% block content_left %}
-    <h5>{{quiz.title}} </h5>
 
     <div class="progress my-3 p-0.5" style="height: 25px;">
         <div class="progress-bar progress-bar-striped" role="progressbar"
@@ -47,6 +47,39 @@
     </div>
     {% endfor %}
 
+        {% if question_attempt.submitted_bool == False %}
+        {{question_attempt.start_time}}
+        <div id="question_timer">
+            <script type="text/javascript">
+             var start_time="{{question_attempt.start_time.timestamp }}";
+             var now = Date.now()/1000
+             var diff = now - start_time
+             
+             $("#question_timer").countdown({since: -diff , format:'MS',
+                                             description:'Time Taken'});
+            </script>
+        </div>
+        {% endif %}
+        
+        {% if attempt.submitted_bool == False %}
+        {{ attempt.start_time}}
+        <div id="timer">
+            
+            <script type="text/javascript">
+             var start_time = "{{ attempt.start_time.timestamp }}";
+             var now = Date.now()/1000
+             var diff = now - start_time
+             
+             $("#timer").countdown({since: -diff , format:'MS',
+                                    description:'Total Time Taken'});
+            </script>
+        </div>
+        {% endif %}
+
     {% endblock content_left %}
+
+    {% block content_right %}
+
+    {% endblock content_right %}
 
 </html>

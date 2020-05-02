@@ -1,8 +1,7 @@
 <html>
-    {% extends 'base.html' %}
+    {% extends 'base_logged_in.html' %}
     {% block content %}
 
-    
     <div class="card shadow p-1 my-5 " style="width:auto">
         <div class="card-body">
             <h5 class="card-title">{{ question.text}}</h5>
@@ -29,18 +28,19 @@
     {% for status_question in status_questions %}
     <div class="list-group">
         {% if question == status_question %}
-        <a href="{% url 'quiz:question' quiz.id attempt_id status_question.id %}"
-        class="list-group-item list-group-item-action active">
+        <a href="{% url 'quiz:question' quiz.id attempt.user_attempt_no status_question.id %}"
+        class="list-group-item list-group-item-action active rounded-0">
             Question {{ status_question.id }}</a>
 
         {% elif status_question.answered_bool == True %}
-        <a href="{% url 'quiz:question' quiz.id attempt_id status_question.id %}"
-           class="list-group-item list-group-item-action answered-button">
+        <a href="{% url 'quiz:question' quiz.id attempt.user_attempt_no status_question.id %}"
+           class="list-group-item list-group-item-action not-current-bt
+                 answered-button rounded-0">
             Question {{ status_question.id }}</a>
 
         {% else %}
-        <a href="{% url 'quiz:question' quiz.id attempt_id status_question.id %}"
-           class="list-group-item list-group-item-action not-current-bt">
+        <a href="{% url 'quiz:question' quiz.id attempt.user_attempt_no status_question.id %}"
+           class="list-group-item list-group-item-action not-current-bt rounded-0">
             Question {{ status_question.id }}</a>
 
         {% endif %}
@@ -49,4 +49,21 @@
 
     {% endblock content_left %}
 
+    {% block content_right %}
+    {% if attempt.submitted_bool == False %}
+    <div id="timer">
+
+        {{value|json_script:"start_time"}}
+        <script type="text/javascript">
+
+         var bob = "{{ attempt.start_time.timestamp }}";
+         var start = Date.now()/1000
+         var diff = start - bob
+
+         $("#timer").countdown({since: -diff , format:'MS',
+                                description:'Time Taken'});
+        </script>
+    </div>
+    {% endif %}
+    {% endblock content_right %}
 </html>

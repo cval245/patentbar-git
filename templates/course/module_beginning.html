@@ -1,0 +1,7 @@
+{% extends 'course/module.html' %}
+
+{% block buttons %}
+<a role="button" href="{% url 'course:module' course.id next_module.id %}"
+   class="btn btn-primary">Next Module: {{next_module}}
+</a>
+{% endblock buttons %}

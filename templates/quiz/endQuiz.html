@@ -1,5 +1,6 @@
 <html>
-    {% extends 'base.html' %}
+
+    {% extends 'base_logged_in.html' %}
     {% load static %}
     {% block content %}
     <h1>
@@ -8,8 +9,17 @@
     <body>
         Details on Results of Quiz
         {{quiz}}
-        <p>{{time_taken.hours}} hours, {{time_taken.minutes}} minutes,
-            {{time_taken.seconds}} seconds</p>
+        <p> Time Taken =
+        {% if attempt.list_time_taken.hours != 0 %}
+        {{ attempt.list_time_taken.hours }} hours
+        {% endif %}
+        {% if attempt.list_time_taken.minutes != 0 %}
+        {{ attempt.list_time_taken.minutes }} minutes
+        {% endif %}
+        {% if attempt.list_time_taken.seconds != 0 %}
+        {{ attempt.list_time_taken.seconds }} seconds
+        {% endif %}
+        </p>
         <p> Score = {{score}}%</p>
         {% for question in questions %}
 
@@ -20,7 +30,6 @@
                 {% if selected_answer.question == question %}
                 <h6 class="card-subtitle">Your Selected Answer
                 </h6>
-                
 
                 <div class="card-text">
 

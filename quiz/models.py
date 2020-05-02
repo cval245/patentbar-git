@@ -17,6 +17,7 @@ class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     text = models.TextField()
     correct_bool = models.BooleanField()
+    explanation = models.TextField()
 
     def __str__(self):
         return self.text

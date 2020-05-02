@@ -1,0 +1,31 @@
+{% extends 'base_logged_in.html' %}
+
+{% block content %}
+<h1>
+    Courses:
+</h1>
+
+<div class="card-deck">
+    {% for course in courses %}
+    <div class="card shadow p-1 my-5">
+        <div class="card-body">
+            <h5 class="card-title">
+                <a href="{% url 'course:course' course.id %}">
+                    {{ course.title }}</a></h5>
+            <div class="card-body">
+                {% for module in modules %}
+                {% if module.course == course %}
+                <li>
+                    {{ module.title }}
+                </li>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <a href="{% url 'course:course' course.id %}"
+               class="btn btn-primary">See Modules</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{{bob}}
+{% endblock content %}

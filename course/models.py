@@ -1,20 +1,35 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 #from quiz.models import Answer, Question, Quiz
 from quiz.models import Quiz
 
 # Create your models here.
 
+class Course(models.Model):
+     title = models.TextField()
+     def __str__(self):
+          return self.title
 
-# class ContentCollection(models.Model):
-#      content=models.TextField()
-#      #This is meant to have an app corresponding to the Quiz app. 
-# class Course(models.Model): 
-#     title=models.TextField()
-#     quiz_collection=models.ForeignKey(QuizCollection,
-#                                       on_delete=models.CASCADE)
-#     content_collection=models.ForeignKey(ContentCollection,
-#                                          on_delete=models.CASCADE)
+class Module(models.Model):
+     title = models.TextField()
+     course = models.ForeignKey(Course, on_delete=models.CASCADE)
+     order_no = models.IntegerField()
+     def __str__(self):
+          return self.title
 
-class QuizCollection(models.Model):
-     quiz=models.ForeignKey(Quiz, on_delete=models.CASCADE)
+     def validate_unique(self, *args, **kwargs):
+          super(Module, self).validate_unique(*args, **kwargs)
+
+          if self.__class__.objects.filter(course=self.course, order_no=self.order_no).exists():
+               raise ValidationError(
+                    message="""Module with this (course, order_no) already exists,
+                    try to use a new order_no"""
+               )
+
+class Content(models.Model):
+     title = models.TextField()
+     text = models.TextField()
+     module = models.ForeignKey(Module, on_delete=models.CASCADE)
+     def __str__(self):
+          return self.title
 

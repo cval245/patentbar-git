@@ -1,20 +1,28 @@
-{% extends 'base.html' %}
+{% extends 'base_logged_in.html' %}
 
 {% block content %}
 
 <h1>
     Results
 </h1>
-{{ username }}
 <table class="table">
     <thead>
         {% for result in quizResults %}
         <tr>
             <th>{{ result.quiz }}</th>
-            <th>{{ result.time_taken }}</th>
+            <th>{% if result.list_time_taken.hours != 0 %}
+                {{ result.list_time_taken.hours }} hours
+                {% endif %}
+                {% if result.list_time_taken.minutes != 0 %}
+                {{ result.list_time_taken.minutes }} minutes
+                {% endif %}
+                {% if result.list_time_taken.seconds != 0 %}
+                {{ result.list_time_taken.seconds }} seconds
+                {% endif %}
+            </th>
             <th>{{ result.score }}</th>
             <th><a class="link"
-                   href="{% url 'quiz:endQuiz' result.quiz.id result.id %}">
+                   href="{% url 'quiz:endQuiz' result.quiz.id result.user_attempt_no %}">
                 see details
             </a></th>
             <th>
@@ -30,12 +38,5 @@
         {% endfor %}
     </thead>
 </table>
-<div class="progress">
-    <div class="progress-bar" role="progressbar" style="width: 25%"
-         aria-valuenow="70" aria-valuemin="0"
-         aria-valuemax="100">
-    </div>
-</div>
-<p>Printing</p>
 
 {% endblock content %}

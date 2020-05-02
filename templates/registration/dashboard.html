@@ -1,11 +1,13 @@
-{% extends 'base.html' %}
+{% extends 'base_logged_in.html' %}
 
 {% block content %}
 
+
 <h1> Account </h1>
-<p> {{ username }} </p>
 <li><a href="{% url 'quiz:index' %}">Quiz</a>
     <a href="{% url 'users:results' %}">Results</a>
 </li>
 
+High Score = {{high_attempt.list_time_taken}}
+Latest Score = {{latest_attempt.score}}
 {% endblock content %}
