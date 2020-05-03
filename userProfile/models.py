@@ -16,7 +16,24 @@ class QuizAttempt(models.Model):
     submitted_bool = models.BooleanField(default=False)
     user_attempt_no = models.IntegerField()
 
-    def calculate_and_set_score(self):
+    def update_or_add_answer(self, question, answer):
+        quiz=self.quiz
+        # answersubmitted exist
+        if AnswersSubmitted.objects.filter(attempt=self,
+                                           question=question).exists():
+            old_answer=AnswersSubmitted.objects.get(attempt=self,
+                                                    question=question)
+            old_answer.setAnswer(answer)
+
+        # answersubmitted does not exist
+        else:
+            # Create a new entry
+            if self.submitted_bool == False:
+                AnswersSubmitted.objects.create(user=self.user,
+                                                question=question,
+                                                answer=answer,attempt=self)
+
+    def calculate_score(self):
         quiz=self.quiz
         quiz_questions=Question.objects.filter(quiz=quiz)
         answers = Answer.objects.filter(question__in=quiz_questions)
@@ -25,9 +42,12 @@ class QuizAttempt(models.Model):
         correct_answers=selected_answers.filter(correct_bool=True).count()
         all_answers=selected_answers.count()
         score = correct_answers / all_answers * 100
-        self.score = score
-        self.save()
-        #return score
+        return score
+
+    def set_score(self):
+        if self.submitted_bool == False:
+            self.score = self.calculate_score()
+            self.save()
 
     def list_time_taken(self):
         days = self.time_taken.days
@@ -67,6 +87,13 @@ class AnswersSubmitted(models.Model):
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     attempt = models.ForeignKey(QuizAttempt, on_delete=models.CASCADE)
+
+    
+
+    def setAnswer(self, answer):
+        if self.attempt.submitted_bool == False:
+            self.answer = answer
+            self.save()
 
     #determines if this is the last question returns True/False
     def isLastUnAnsweredQuestion(self):

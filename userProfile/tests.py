@@ -47,12 +47,13 @@ class QuizAttemptModelTest(TestCase):
                                    quiz=cls.quiz_one,
                                    finish_time=timezone.now(),
                                    score=0,
-                                   user_attempt_no=1)
+                                    user_attempt_no=1)
         cls.attempt_two=QuizAttempt.objects.create(user=cls.user,
                                    quiz=cls.quiz_one,
                                    finish_time=timezone.now(),
                                    score=0,
                                    user_attempt_no=2)
+
 
     # Test if set_user_attempt_no function returns 1 for attempt_no with
     # a quiz that hasn't been attempted before
@@ -104,7 +105,7 @@ class QuizAttemptModelTest(TestCase):
         assert progress == 50
 
 
-    def test_SetCalculateScoreIsCorrect(self):
+    def test_CalculateScoreIsCorrect(self):
         user=auth.get_user(self.client)
         quiz_one=Quiz.objects.get(id=1)
         question_one=Question.objects.get(id=1)
@@ -120,7 +121,26 @@ class QuizAttemptModelTest(TestCase):
                                         question=question_two,
                                         attempt=attempt)
 
-        attempt.calculate_and_set_score()
+        score = attempt.calculate_score()
+        assert score == 100
+
+    def test_SetScore(self):
+        user=auth.get_user(self.client)
+        quiz_one=Quiz.objects.get(id=1)
+        question_one=Question.objects.get(id=1)
+        question_two=Question.objects.get(id=2)
+        answer_one=Answer.objects.get(id=1)
+        answer_three=Answer.objects.get(id=3)
+        attempt=QuizAttempt.objects.get(user=user,quiz=quiz_one,
+                                        user_attempt_no=1)
+        AnswersSubmitted.objects.create(user=user,answer=answer_one,
+                                        question=question_one,
+                                        attempt=attempt)
+        AnswersSubmitted.objects.create(user=user,answer=answer_three,
+                                        question=question_two,
+                                        attempt=attempt)
+        print(attempt.calculate_score())
+        attempt.set_score()
         assert attempt.score == 100
 
 class AnswersSubmittedModelTest(TestCase):
@@ -167,6 +187,12 @@ class AnswersSubmittedModelTest(TestCase):
                                    finish_time=timezone.now(),
                                    score=0,
                                    user_attempt_no=2)
+        cls.attempt_True=QuizAttempt.objects.create(user=cls.user,
+                                   quiz=cls.quiz_one,
+                                   finish_time=timezone.now(),
+                                   score=0,
+                                submitted_bool=True,
+                                   user_attempt_no=3)
 
     def test_AnswersSubmtetedtIsLastQuestionFalse(self):
         user=auth.get_user(self.client)
@@ -269,3 +295,34 @@ class AnswersSubmittedModelTest(TestCase):
         question = submitted_two.getNextQuestion()
         assert question == None
 
+    def test_setAnswerSubmittedFalse(self):
+        user=auth.get_user(self.client)
+        quiz_one=Quiz.objects.get(id=1)
+        question_one=Question.objects.get(id=1)
+        answer_one=Answer.objects.get(id=1)
+        answer_two=Answer.objects.get(id=2)
+        attempt=QuizAttempt.objects.get(user=user,quiz=quiz_one,
+                                        user_attempt_no=1)
+        submitted_one=AnswersSubmitted.objects.create(user=user,
+                                                      answer=answer_one,
+                                                      question=question_one,
+                                                      attempt=attempt)
+        submitted_one.setAnswer(answer_two)
+
+        assert submitted_one.answer == answer_two
+
+    def test_setAnswerSubmittedTrue(self):
+        user=auth.get_user(self.client)
+        quiz_one=Quiz.objects.get(id=1)
+        question_one=Question.objects.get(id=1)
+        answer_one=Answer.objects.get(id=1)
+        answer_two=Answer.objects.get(id=2)
+        attempt_true=QuizAttempt.objects.get(user=user,quiz=quiz_one,
+                                        user_attempt_no=3)
+        submitted_one=AnswersSubmitted.objects.create(user=user,
+                                                      answer=answer_one,
+                                                      question=question_one,
+                                                      attempt=attempt_true)
+        submitted_one.setAnswer(answer_two)
+
+        assert submitted_one.answer == answer_one

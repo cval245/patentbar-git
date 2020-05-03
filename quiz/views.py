@@ -141,32 +141,40 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
 
                 # determine if user already entered an answer for that questions
                 # if so, then update the old answer.
-                if AnswersSubmitted.objects.filter(user=request.user,
-                                                   question=QUESTION,
-                                                   attempt=attempt).exists():
-                    old_answer=AnswersSubmitted.objects.get(
-                        user=request.user,
-                        question=QUESTION,
-                        attempt=attempt)
-                    old_answer.answer = ANSWER
-                    old_answer.save()
-                    submission=old_answer
-                else:
-                    submission=AnswersSubmitted.objects.create(
-                        user=request.user,
-                        question=QUESTION,
-                        answer=ANSWER,
-                        attempt=attempt)
+                attempt.update_or_add_answer(QUESTION, ANSWER)
+                submission=AnswersSubmitted.objects.get(attempt=attempt,
+                                                        question=QUESTION)
+
+
+                # if AnswersSubmitted.objects.filter(user=request.user,
+                #                                    question=QUESTION,
+                #                                    attempt=attempt).exists():
+                #     old_answer=AnswersSubmitted.objects.get(
+                #         user=request.user,
+                #         question=QUESTION,
+                #         attempt=attempt)
+                #     old_answer.setAnswer(ANSWER)
+                #     submission=old_answer
+                # else:
+                #     submission=AnswersSubmitted.objects.create(
+                #         user=request.user,
+                #         question=QUESTION,
+                #         answer=ANSWER,
+                #         attempt=attempt)
+
+
+
                 # Determine if the next question is there, then move to it
                 # After the final question is answered, does a passthrough to
-                # look for unanswered questions. If there are none, it moves to
-                # the submitquiz section
+                # look for unanswered questions. If there are none, it moves
+                # to the submitquiz section
 
                 # if this is the last quiz navigate to submitquiz view
                 if submission.isLastUnAnsweredQuestion():
 
-                    # calculate and store score value
-                    attempt.calculate_and_set_score()
+                    # calculate and store score value provided that the quiz
+                    # hasn't been submitted before
+                    attempt.set_score()
                     return HttpResponseRedirect(
                         reverse('quiz:submitQuiz',
                                 kwargs={'pk':quiz.id,
@@ -174,7 +182,6 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
                 # otherwise navigate to the next question
                 else:
                     next_question = submission.getNextQuestion()
-                    print('\n\n\n\n\n\n', next_question, '\n\n\n\n')
                     return HttpResponseRedirect(
                         reverse('quiz:question',
                                 kwargs={'question_id':next_question.id, 'pk':quiz.id,
