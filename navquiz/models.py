@@ -5,7 +5,8 @@ from django.db import models
 class NavQuestion(models.Model):
     text = models.TextField()
     def __str__(self):
-        return self.text
+        name =  str(self.id) + ': ' + self.text
+        return name
 
 class NavAnswer(models.Model):
     question = models.ForeignKey(NavQuestion, on_delete=models.CASCADE)

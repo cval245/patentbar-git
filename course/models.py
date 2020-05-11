@@ -14,6 +14,9 @@ class Module(models.Model):
      title = models.TextField()
      course = models.ForeignKey(Course, on_delete=models.CASCADE)
      order_no = models.IntegerField()
+     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE,
+                              blank=True,
+                              null=True)
      def __str__(self):
           return self.title
 

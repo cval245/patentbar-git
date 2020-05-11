@@ -53,10 +53,11 @@ class QuizDetailView(LoginRequiredMixin, generic.DetailView):
                                            finish_time=timezone.now(),
                                            score=score, user_attempt_no=0)
         # get next user_attempt_no
-        next_user_attempt_no = attempt.get_next_user_attempt_no(request.user,
-                                                                quiz)
+        next_user_attempt_no = attempt.get_next_user_attempt_no()#request.user,
+                                                                #quiz)
         attempt.user_attempt_no = next_user_attempt_no
         attempt.save()
+
         first_question=Question.objects.filter(quiz=quiz).first()
         return HttpResponseRedirect(
                 reverse('quiz:question',
@@ -84,10 +85,12 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
         question = Question.objects.get(id=question_id)
         answer_selected = AnswersSubmitted.objects.filter(question=question,
                                                           attempt=attempt)
-        # Determine if the next question is there, then move to it
-        # After the final question is answered, does a passthrough to
-        # look for unanswered questions. If there are none, it moves to
-        # the submitquiz section
+
+        # calculation of status_questions is below, it is about adding a
+        # Boolean Column for whether the answer has been submitted or not
+        ## should change to a custom template tag and render in template
+        ## using 'true_if_answered' function in QuizAttempt
+
         results =AnswersSubmitted.objects.filter(question__in=quiz_questions,
                                                   attempt=attempt)
         answered_questions = results.values('question')
@@ -100,6 +103,9 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
         unanswered_questions = unanswered_questions.annotate(
             answered_bool=Value(False, BooleanField()))
         status_questions = answered_questions.union(unanswered_questions).order_by('id')
+
+        # add question_number column to status questions
+
         # Prepopulates the form field, if the user already selected
         if answer_selected:
             answer_selected_id=answer_selected.get().answer.id
@@ -109,8 +115,7 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
         else:
             form = self.form_class(request.GET or None, question=question_id)
 
-        #progress=self.calculateProgress(request.user, quiz_questions,attempt)
-        progress = attempt.progress(request.user, quiz)
+        progress = attempt.progress()#request.user, quiz)
         return render(request, self.template_name,
                       {'form':form, 'question':question,
                        'attempt':attempt,
@@ -128,112 +133,37 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
         attempt = QuizAttempt.objects.get(user=request.user,
                                           quiz=quiz,
                                           user_attempt_no=user_attempt_no)
-        next_question_id = question_id + 1
-        quiz = Quiz.objects.get(id=quiz_id)
-        quiz_questions=Question.objects.filter(quiz=quiz)
-        QUESTION = quiz_questions.get(id=question_id)
+        question=Question.objects.get(id=question_id)
         form = self.form_class(request.POST, question=question_id)
 
         if form.is_valid():
-            ANSWER = form.cleaned_data['choice']
+            answer = form.cleaned_data['choice']
 
-            if attempt.submitted_bool == False:
+            # determine if user already entered an answer for that questions
+            # if so, then update the old answer.
+            attempt.update_or_add_answer(question, answer)
+            submission=AnswersSubmitted.objects.get(attempt=attempt,
+                                                    question=question)
 
-                # determine if user already entered an answer for that questions
-                # if so, then update the old answer.
-                attempt.update_or_add_answer(QUESTION, ANSWER)
-                submission=AnswersSubmitted.objects.get(attempt=attempt,
-                                                        question=QUESTION)
+            # if last unanswered question navigate to submitquiz view
+            if submission.isLastUnAnsweredQuestion():
 
-
-                # if AnswersSubmitted.objects.filter(user=request.user,
-                #                                    question=QUESTION,
-                #                                    attempt=attempt).exists():
-                #     old_answer=AnswersSubmitted.objects.get(
-                #         user=request.user,
-                #         question=QUESTION,
-                #         attempt=attempt)
-                #     old_answer.setAnswer(ANSWER)
-                #     submission=old_answer
-                # else:
-                #     submission=AnswersSubmitted.objects.create(
-                #         user=request.user,
-                #         question=QUESTION,
-                #         answer=ANSWER,
-                #         attempt=attempt)
-
-
-
-                # Determine if the next question is there, then move to it
-                # After the final question is answered, does a passthrough to
-                # look for unanswered questions. If there are none, it moves
-                # to the submitquiz section
-
-                # if this is the last quiz navigate to submitquiz view
-                if submission.isLastUnAnsweredQuestion():
-
-                    # calculate and store score value provided that the quiz
-                    # hasn't been submitted before
-                    attempt.set_score()
-                    return HttpResponseRedirect(
-                        reverse('quiz:submitQuiz',
-                                kwargs={'pk':quiz.id,
-                                        'user_attempt_no':attempt.user_attempt_no}))
-                # otherwise navigate to the next question
-                else:
-                    next_question = submission.getNextQuestion()
-                    return HttpResponseRedirect(
-                        reverse('quiz:question',
-                                kwargs={'question_id':next_question.id, 'pk':quiz.id,
-                                        'user_attempt_no':attempt.user_attempt_no}))
-            else:
+                # calculate and store score value provided that the quiz
+                # hasn't been submitted before
+                attempt.set_score()
                 return HttpResponseRedirect(
                     reverse('quiz:submitQuiz',
                             kwargs={'pk':quiz.id,
                                 'user_attempt_no':attempt.user_attempt_no}))
+            # otherwise navigate to the next question
+            else:
+                next_question = submission.getNextQuestion()
+                return HttpResponseRedirect(
+                    reverse('quiz:question',
+                            kwargs={'question_id':next_question.id,
+                                    'pk':quiz.id,
+                                'user_attempt_no':attempt.user_attempt_no}))
  
-            # results = AnswersSubmitted.objects.filter(
-            #     question__in=quiz_questions,
-            #     attempt=attempt)
-            # answered_questions = results.values('question')
-            # unanswered_questions = quiz_questions.exclude(id__in=answered_questions)
-
-
-            # if quiz_questions.filter(id=next_question_id):
-            #     next_question=quiz_questions.get(id=next_question_id)
-            #     return HttpResponseRedirect(
-            #         reverse('quiz:question',
-            #         kwargs={'question_id':next_question_id, 'pk':quiz.id,
-            #                 'user_attempt_no':attempt.user_attempt_no}))
-
-            # elif unanswered_questions.count() > 0:
-
-            #     #find the earliest of the unanswered questions
-            #     # redirect to it.
-            #     first_question=unanswered_questions.order_by('id')[:1].get()
-
-            #     return HttpResponseRedirect(
-            #         reverse('quiz:question',
-            #                 kwargs={'question_id':first_question.id,
-            #                         'pk':quiz.id,
-            #                     'user_attempt_no':attempt.user_attempt_no}))
-
-            # else:
-            #     answers = Answer.objects.filter(question__in=quiz_questions)
-            #     results = AnswersSubmitted.objects.filter(
-            #         question__in=quiz_questions,
-            #         attempt=attempt)
-            #     selected_answers = Answer.objects.filter(answerssubmitted__in=results)
-            #     # determine the score the percentage of answers correct
-            #     correct_answers=selected_answers.filter(correct_bool=True).count()
-            #     all_answers=selected_answers.count()
-            #     score=correct_answers / all_answers *100
-            #     QuizAttempt.objects.filter(id=attempt.id).update(score=score)
-
-            #     return HttpResponseRedirect(
-            #         reverse('quiz:submitQuiz',
-            #                 kwargs={'pk':quiz.id,
-            #                     'user_attempt_no':attempt.user_attempt_no}))
         return HttpResponseRedirect('/quiz/')
 
 
@@ -255,7 +185,10 @@ class SubmitQuizView(LoginRequiredMixin, generic.TemplateView):
         results = AnswersSubmitted.objects.filter(question__in=questions,
                                                   attempt=attempt)
         selected_answers = Answer.objects.filter(answerssubmitted__in=results)
-
+        # calculation of status_questions is below, it is about adding a
+        # Boolean Column for whether the answer has been submitted or not
+        ## should change to a custom template tag and render in template
+        ## using 'true_if_answered' function in QuizAttempt
         answered_questions = results.values('question')
         unanswered_questions = questions.exclude(
             id__in=answered_questions)
@@ -268,10 +201,9 @@ class SubmitQuizView(LoginRequiredMixin, generic.TemplateView):
         status_questions = answered_questions.union(unanswered_questions).order_by('id')
 
         # report the score and the time_taken
-        progress=attempt.progress(request.user, quiz)
+        progress=attempt.progress()
         return render(request, self.template_name,
-                      {'quiz':quiz,
-                       'results':results, 'attempt':attempt,
+                      {'quiz':quiz, 'attempt':attempt,
                        'questions':status_questions, 'answers':answers,
                        'selected_answers':selected_answers,
                        'progress':progress, 'username':request.user
@@ -308,9 +240,9 @@ class EndOfQuizView(LoginRequiredMixin, generic.TemplateView):
         quiz = Quiz.objects.get(id=quiz_id)
         attempt = QuizAttempt.objects.get(user=request.user, quiz=quiz,
                                           user_attempt_no=user_attempt_no)
-        questions = Question.objects.filter(quiz=quiz)
+        questions = Question.objects.filter(quiz=quiz).order_by('id')
 
-        answers = Answer.objects.filter(question__in=questions)
+        answers = Answer.objects.filter(question__in=questions).order_by('id')
         results = AnswersSubmitted.objects.filter(question__in=questions,
                                                   attempt=attempt)
         selected_answers=Answer.objects.filter(answerssubmitted__in=results)

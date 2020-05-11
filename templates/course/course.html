@@ -5,18 +5,23 @@
     Course: {{course.title}}
 </h1>
 
-
-<div class="card-deck">
+<div class="container">
+<div class="row row-cols-1 row-cols-md-3">
     {% for module in modules %}
-    <div class="card shadow p-1 my-5">
-        <div class="card-body">
-            <h5 class="card-title">Module: {{ module.title }}</h5>
+    <div class="col mb-4 col-md-4">
+        <div class="card shadow p-1 my-5 h-100">
             <div class="card-body">
+                <h5 class="card-title">Module: {{ module.title }}</h5>
+                <div class="card-body">
+                </div>
             </div>
-            <a href="{% url 'course:module' course.id module.id %}"
-               class="btn btn-primary">See Content</a>
+            <div class="card-footer">
+                <a href="{% url 'course:module' course.id module.id %}"
+                   class="btn btn-primary">See Content</a>
+            </div>
         </div>
     </div>
     {% endfor %}
+</div>
 </div>
 {% endblock content %}

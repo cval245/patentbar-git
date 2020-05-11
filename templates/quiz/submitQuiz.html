@@ -60,12 +60,12 @@
     {% if status_question.answered_bool == True %}
     <a href="{% url 'quiz:question' quiz.id attempt.user_attempt_no status_question.id %}"
        class="list-group-item list-group-item-action answered-button">
-        Question {{ status_question.id }}</a>
+        Question {{ forloop.counter }}</a>
     {% else %}
     <div class="list-group">
         <a href="{% url 'quiz:question' quiz.id attempt.user_attempt_no status_question.id %}"
            class="list-group-item list-group-item-action">
-            Question {{ quiz_question.id }}</a>
+            Question {{ forloop.counter }}</a>
     </div>
     {% endif %}
     {% endfor %}

@@ -2,8 +2,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render
 from django.views import generic
 from django.http import Http404
+from django.utils import timezone
 
 from .models import Course, Module, Content
+from quiz.models import Quiz
+from userProfile.models import QuizAttempt
 # Create your views here.
 
 class MainCourseView(LoginRequiredMixin, generic.TemplateView):
@@ -57,6 +60,8 @@ class ModuleView(LoginRequiredMixin, generic.TemplateView):
         
         previous_module = Module.objects.get(id=previous_mod)
 
+        quiz=module.quiz
+
         # if this is the first module of the course (no previous module)
         if previous_module.id == module.id:
             next_module = Module.objects.get(id=next_mod_id)
@@ -64,7 +69,8 @@ class ModuleView(LoginRequiredMixin, generic.TemplateView):
                           {'username':request.user, 'course':course,
                            'module':module, 'contents':contents,
                            'modules_all':modules_all,
-                           'next_module':next_module})
+                           'next_module':next_module,
+                           'quiz': quiz})
         
 
         # if there is NOT a next_module (last module in course)
@@ -73,7 +79,8 @@ class ModuleView(LoginRequiredMixin, generic.TemplateView):
                           {'username':request.user, 'course':course,
                            'module':module, 'contents':contents,
                            'modules_all':modules_all,
-                           'previous_module':previous_module})
+                           'previous_module':previous_module,
+                           'quiz':quiz})
         # if there is a next_module
         else:
             next_module = Module.objects.get(id=next_mod_id)
@@ -81,7 +88,8 @@ class ModuleView(LoginRequiredMixin, generic.TemplateView):
                       {'username':request.user, 'course':course,
                        'module':module,'next_module':next_module,
                        'contents':contents, 'modules_all':modules_all,
-                       'previous_module':previous_module
+                       'previous_module':previous_module,
+                       'quiz':quiz
                       })
 
         raise Http404

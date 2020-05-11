@@ -24,24 +24,23 @@
              aria-valuemax="100">
         </div>
     </div>
-
     {% for status_question in status_questions %}
     <div class="list-group">
         {% if question == status_question %}
         <a href="{% url 'quiz:question' quiz.id attempt.user_attempt_no status_question.id %}"
         class="list-group-item list-group-item-action active rounded-0">
-            Question {{ status_question.id }}</a>
+            Question {{ forloop.counter }}</a>
 
         {% elif status_question.answered_bool == True %}
         <a href="{% url 'quiz:question' quiz.id attempt.user_attempt_no status_question.id %}"
            class="list-group-item list-group-item-action not-current-bt
                  answered-button rounded-0">
-            Question {{ status_question.id }}</a>
+            Question {{ forloop.counter }}</a>
 
         {% else %}
         <a href="{% url 'quiz:question' quiz.id attempt.user_attempt_no status_question.id %}"
            class="list-group-item list-group-item-action not-current-bt rounded-0">
-            Question {{ status_question.id }}</a>
+            Question {{ forloop.counter }}</a>
 
         {% endif %}
     </div>

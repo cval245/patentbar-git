@@ -56,6 +56,16 @@
 
                 {% endif %}
                 {% endfor %}
+
+                {% for answer in answers %}
+                {% if answer.question == question %}
+                
+                {% if answer.correct_bool == True %}
+                {{answer.explanation}}
+                {% endif %}
+
+                {% endif %}
+                {% endfor %}
                 </div>
 
                 {% endif %}

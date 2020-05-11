@@ -28,51 +28,28 @@ class StartNavQuiz(LoginRequiredMixin, generic.TemplateView):
                       {'username':request.user})
 
     def post(self, request, *args, **kwargs):
-        start_time = datetime.now()
-        finish_time=datetime(2000, 1, 1, 0, 0, 0, 0) # default placeholder
-        score=0 #default placeholder
-
-        #calculate last user_attempt_no
-        if NavQuizAttempt.objects.filter(user=request.user):
-            navquiz_attempts=NavQuizAttempt.objects.filter(user=request.user)
-            navquiz_attempt = NavQuizAttempt.objects.latest('start_time')
-
-            # iterate to the next user_attempt_no
-            user_attempt_no = navquiz_attempt.user_attempt_no + 1
-        else:
-            user_attempt_no = 1
+        # initialize attempt
         attempt = NavQuizAttempt.objects.create(user=request.user,
-                                        finish_time=finish_time,
-                                        score=score,
-                                        user_attempt_no=user_attempt_no)
+                                        finish_time=timezone.now(),
+                                        score=0,
+                                        user_attempt_no=0)#user_attempt_no)
+        # get next attempt no
+        attempt.user_attempt_no=attempt.get_next_user_attempt_no()
+        attempt.save()
 
-        count = NavQuestion.objects.aggregate(count=Count('id'))['count']
-        num_questions_in_exam = 5
-        list_of_question_id = list()
+        # Generate 5 questions to the Navquiz (defined in model function)
+        attempt.generate_navQuiz()
 
-        # Generate list of question ids
-        list_of_question_id=random.sample(range(1, count+1),
-                                          num_questions_in_exam)
+        # Identify the next question
+        next_question_attempt=attempt.getNextQuestionAttempt()
 
-        #create List of questions
-        for question_id in list_of_question_id:
-            next_question=NavQuestion.objects.get(id=question_id)
-            next_question_attempt=NavAnswersSubmitted.objects.create(
-                user=request.user,
-                attempt=attempt,
-                question=next_question,
-                start_time=start_time,
-                finish_time=finish_time)
-
-        # ensure that the next_question is the first of the attempts.
-        question_attempts=NavAnswersSubmitted.objects.filter(attempt=attempt)
-        first_question_attempt = question_attempts.first()
-        first_question = first_question_attempt.question
+        # set the time for starting the new question
+        attempt.startNextQuestionAttempt()
 
         return HttpResponseRedirect(
             reverse('navquiz:question',kwargs=
                     {'user_attempt':attempt.user_attempt_no,
-                     'question_id':first_question.id}))
+                     'question_id':next_question_attempt.question.id}))
     # Need to update the Quesion_id?  Some randomization????
 
 class QuestionView(LoginRequiredMixin, generic.CreateView):
@@ -82,26 +59,16 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
     redirect_field_name = 'redirect_to'
     template_name='navQuiz/question.html'
 
-    def calculateProgress(self, user, quiz_questions, attempt):
-        answered_questions=NavAnswersSubmitted.objects.filter(user=user).filter(attempt=attempt).filter(submitted_bool=True).aggregate(Count('question'))
-        total_questions=quiz_questions.aggregate(Count('id'))
-        num_total_questions=total_questions.get('id__count')
-        num_answered_questions=answered_questions.get('question__count')
-        progress = num_answered_questions / num_total_questions * 100
-        return progress
-
     def get(self, request, *args, **kwargs):
         user_attempt_no = self.kwargs.pop('user_attempt')
         question_id = self.kwargs.pop('question_id')
         attempt = NavQuizAttempt.objects.get(user=request.user,
                                              user_attempt_no=user_attempt_no)
         question = NavQuestion.objects.get(id=question_id)
-        quiz_questions = NavAnswersSubmitted.objects.filter(attempt=attempt)
         question_attempt = NavAnswersSubmitted.objects.get(attempt=attempt,
                                                            question=question)
         form = self.form_class(request.GET or None)
-        progress=self.calculateProgress(request.user,quiz_questions, attempt)
-
+        progress=attempt.progress()
         return render(request, self.template_name,
                       {'question':question, 'form':form,'progress':progress,
                        'username':request.user,'attempt':attempt,
@@ -115,60 +82,28 @@ class QuestionView(LoginRequiredMixin, generic.CreateView):
         question = NavQuestion.objects.get(id=question_id)
         question_attempt = NavAnswersSubmitted.objects.get(attempt=attempt, question=question)
 
-        question = question_attempt.question
         form = self.form_class(request.POST or None, instance=question)
         if attempt.submitted_bool==False:
             if form.is_valid():
                 answer = form.cleaned_data['article_submitted']
-                
-                question_attempt.article_submitted=answer
-                question_attempt.finish_time=timezone.now()
-                print("super ", question_attempt.submitted_bool)
-                question_attempt.submitted_bool=True
-                question_attempt.save()
-                question_attempt.time_taken=(question_attempt.finish_time - question_attempt.start_time)
-                print("super ", question_attempt.submitted_bool)
+                # Save user answer & process
+                question_attempt.save_user_answer(answer)
 
-                answer = NavAnswer.objects.get(question=question)
-                #from decimal import *
-                
-                if answer.mpep_location== question_attempt.article_submitted:
-                    question_attempt.correct_bool=True
-                    question_attempt.save()
-                else:
-                    question_attempt.correct_bool=False
-                    question_attempt.save()
-                
-                # Identify the next question I am not a huge fan
-                next_question_attempt_id = question_attempt.id + 1
-                if NavAnswersSubmitted.objects.filter(id=next_question_attempt_id).exists():
-                    next_question_attempt= NavAnswersSubmitted.objects.get(id=next_question_attempt_id)
-                        
-                    next_question=next_question_attempt.question
-                    print("potatoes  ", next_question_attempt.start_time)
-                    next_question_attempt.start_time = timezone.now()
-                    next_question_attempt.save()
-                    print("sorry buddy ", next_question_attempt.start_time)
+                # if there is an unanswered question
+                if attempt.isThereUnAnsweredQuestion():
+                    # Identify the next question
+                    next_question_attempt=attempt.getNextQuestionAttempt()
+
+                    # set the time for starting the new question
+                    attempt.startNextQuestionAttempt()
+
                     return HttpResponseRedirect(
                         reverse('navquiz:question',
                             kwargs={'user_attempt':attempt.user_attempt_no,
-                                    'question_id':next_question.id}))
+                        'question_id':next_question_attempt.question.id}))
+                # if there is NOT another question (finish the navQuiz)
                 else:
-
-                    attempt.submitted_bool=True
-                    attempt.finish_time=timezone.now()
-                    attempt.save()
-                        
-                    attempt.time_taken=attempt.finish_time-attempt.start_time
-                    attempt.save()
-
-                    correct_answers = NavAnswersSubmitted.objects.filter(attempt=attempt, correct_bool=True)
-                    wrong_answers = NavAnswersSubmitted.objects.filter(attempt=attempt, correct_bool=False)
-                    correct_count = correct_answers.count()
-                    wrong_count = wrong_answers.count()
-
-                    attempt.score = 100 * correct_count / (correct_count + wrong_count)
-                    attempt.save()
+                    attempt.finishAttempt()
                     return HttpResponseRedirect(reverse('navquiz:endQuiz'
                         ,kwargs={'user_attempt':attempt.user_attempt_no}))
             else:
@@ -199,4 +134,3 @@ class EndOfQuizView(LoginRequiredMixin, generic.TemplateView):
                                     'username':request.user})
 
 
-    # Create your views here.
