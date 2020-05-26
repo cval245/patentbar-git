@@ -27,10 +27,14 @@
 </a>
 
 <div class="list-group">
-{% for mod in modules_all %}
+{% for mod in status_modules %}
     {% if mod == module %}
     <a href="{% url 'course:module' course.id mod.id %}"
        class="list-group-item list-group-item-action active rounded-0">
+        {{ mod.title }}</a>
+    {% elif mod.completed_bool == True %}
+    <a href="{% url 'course:module' course.id mod.id %}"
+       class="list-group-item list-group-item-action answered-button rounded-0">
         {{ mod.title }}</a>
     {% else %}
     <a href="{% url 'course:module' course.id mod.id %}"

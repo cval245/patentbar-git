@@ -74,9 +74,13 @@
             </div>
         </div>
         {% endfor %}
-        <a role="button" href="{% url 'users:dashboard' %}"
-           class="btn btn-primary">Return to Dashboard
+        <a role="button" href="{{next_button}} "
+           class="btn btn-primary">Back To Course
         </a>
+        <a role="button" href="{% url 'users:dashboard' %}"
+           class="btn btn-primary">Go to Dashboard
+        </a>
+
     </body>
     {% endblock content %}
 </html>

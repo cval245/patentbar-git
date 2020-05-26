@@ -21,11 +21,17 @@
                 {% endif %}
                 {% endfor %}
             </div>
-            <a href="{% url 'course:course' course.id %}"
-               class="btn btn-primary">See Modules</a>
+            <form method="post" >
+                {% csrf_token %}
+                <button
+                    type="submit"
+                    name="course_id"
+                    value="{{course.id}}"
+                    class="btn btn-primary">{% csrf_token %}Start Course
+                </button>
+            </form>
         </div>
     </div>
     {% endfor %}
 </div>
-{{bob}}
 {% endblock content %}

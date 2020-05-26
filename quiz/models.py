@@ -4,6 +4,7 @@ from django.db import models
 
 class Quiz(models.Model):
     title = models.TextField()
+    passing_score = models.IntegerField(default=80)
     def __str__(self):
         return self.title
 

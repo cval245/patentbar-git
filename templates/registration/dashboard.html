@@ -2,12 +2,47 @@
 
 {% block content %}
 
-
 <h1> Account </h1>
-<li><a href="{% url 'quiz:index' %}">Quiz</a>
-    <a href="{% url 'users:results' %}">Results</a>
-</li>
+<ul>
+<li><a href="{% url 'quiz:index' %}">Quiz</a></li>
+<li><a href="{% url 'users:results' %}">Results</a></li>
+</ul>
+<div>
+    <h3> Courses in Progress </h3>
+    {% for course in started_courses %}
+    <div class="card my-5 shadow p-1" style="width:auto">
+        <div class="card-body">
+            <li>Course {{course.course.id }}. {{ course.course }}</li>
+            <div class="progress my-3 p-0.5" style="height: 25px;">
+                <div class="progress-bar progress-bar-striped"
+                     role="progressbar"
+                     style="width:{{course.calculate_progress}}%"
+                     aria-valuenow="{{course.calculate_progress}}"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                </div>
+            </div>
+            <a role="button"
+               class="btn btn-primary"
+                href="{% url 'course:module' course.course.id course.get_latest_module.id %}">
+                Go to Course
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 
-High Score = {{high_attempt.list_time_taken}}
-Latest Score = {{latest_attempt.score}}
+<div>
+    <h3> Completed Courses </h3>
+    {% for course in completed_courses %}
+    <li>Course {{course.course.id }}. {{ course.course }}</li>
+
+    {% endfor %}
+</div>
+
+<p>
+    NavQuizScores
+    High Score = {{high_attempt.list_time_taken}}
+    Latest Score = {{latest_attempt.score}}
+</p>
 {% endblock content %}

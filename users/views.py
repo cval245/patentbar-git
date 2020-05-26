@@ -7,6 +7,7 @@ from django.views.generic.edit import FormView
 from users.forms import CustomUserCreationForm
 
 from userProfile.models import QuizAttempt, NavQuizAttempt
+from userProfile.models import CourseCompletion, ModuleCompletion
 from quiz.models import Quiz
 from datetime import timedelta
 # Create your views here.
@@ -19,9 +20,27 @@ class DashboardView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         high_attempt = NavQuizAttempt.objects.filter(user=request.user).order_by('-score').first()
         latest_attempt = NavQuizAttempt.objects.filter(user=request.user).order_by('-finish_time').first()
-        return render(request, self.template_name, {'username': request.user,
-                                                    'high_attempt': high_attempt,
-                                                'latest_attempt':latest_attempt})
+
+        completed_courses =CourseCompletion.objects.filter(user=request.user,
+                                                        finished_bool=True)
+
+        started_courses=CourseCompletion.objects.filter(user=request.user,
+                                                        finished_bool=False)
+        started_modules_course = ModuleCompletion.objects.filter(
+            course_attempt__in=started_courses)
+        started_modules_course=started_modules_course.filter(
+            finished_bool=True)
+        started_courses=CourseCompletion.objects.filter(
+            modulecompletion__in=started_modules_course).distinct()
+        print('started_courses = ', started_courses)
+
+        return render(request, self.template_name,
+                      {'username': request.user,
+                       'high_attempt': high_attempt,
+                       'latest_attempt':latest_attempt,
+                       'completed_courses':completed_courses,
+                       'started_courses':started_courses
+        })
 
 
 class SignUpView(FormView):

@@ -1,6 +1,7 @@
 from django.db import models
 from quiz.models import Answer, Question, Quiz
 from navquiz.models import NavQuestion, NavAnswer
+from course.models import Course, Module
 from django.db.models import Count
 
 from django.utils import timezone
@@ -18,6 +19,12 @@ class QuizAttempt(models.Model):
     time_taken = models.DurationField(default=datetime.timedelta())
     submitted_bool = models.BooleanField(default=False)
     user_attempt_no = models.IntegerField()
+
+    def true_if_passed(self):
+        if self.score > self.quiz.passing_score:
+            return True
+        else:
+            return False
 
     def true_if_answered(self, question):
         # if there is an answersubmitted for the question
@@ -325,3 +332,83 @@ class NavAnswersSubmitted(models.Model):
         else:
             self.correct_bool=False
             self.save()
+
+class CourseCompletion(models.Model):
+    user = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    finished_bool = models.BooleanField(default=False)
+
+    def set_course_completed(self):
+        if self.is_course_completed():
+            self.finished_bool=True
+            self.save()
+        else:
+            self.finished_bool=False
+            self.save()
+
+    def is_course_completed(self):
+        modules = Module.objects.filter(course=self.course)
+        moduleAttempts = ModuleCompletion.objects.filter(course_attempt=self)
+        quizzes = Quiz.objects.filter(module__in=modules)
+        for completed_mod in moduleAttempts:
+            if completed_mod.is_module_completed() == False:
+                return False
+        return True
+
+    def calculate_progress(self):
+        modules = Module.objects.filter(course=self.course)
+        moduleAttempts = ModuleCompletion.objects.filter(course_attempt=self,
+                                                         finished_bool=True)
+        progress = moduleAttempts.count() / modules.count() * 100
+        return progress
+
+    def get_latest_module(self):
+        if self.is_course_completed() == False:
+            moduleAttempts = ModuleCompletion.objects.filter(
+                course_attempt=self, finished_bool=False)
+            modules = Module.objects.filter(modulecompletion__in =moduleAttempts)
+            nextModule=modules.order_by('order_no').first()
+            return nextModule
+        else:
+            return None
+
+class ModuleCompletion(models.Model):
+    course_attempt = models.ForeignKey(CourseCompletion,
+                                       on_delete=models.CASCADE)
+    module = models.ForeignKey(Module, on_delete=models.CASCADE)
+    finished_bool = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together=['course_attempt', 'module', 'finished_bool']
+
+    def is_module_quiz_complete(self):
+        quiz = self.module.quiz
+        if quiz is not None:
+            attempt=QuizAttempt.objects.filter(user=self.course_attempt.user,
+                                        quiz=quiz).order_by('-id').first()
+            if attempt.true_if_passed() == False:
+                return False
+            else:
+                return True
+        else:
+            return True
+
+    def set_module_complete(self):
+        if self.is_module_quiz_complete() == True:
+            self.finished_bool=True
+            print(self.finished_bool, "This is True apparently")
+            self.save()
+        else:
+            self.finished_bool=False
+            self.save()
+
+    def is_module_completed(self):
+        if self.is_module_quiz_complete == False:
+            return False
+
+        if self.finished_bool:
+            return True
+        else:
+            return False
+
+

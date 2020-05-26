@@ -1,10 +1,27 @@
 {% extends 'course/module.html' %}
 
 {% block buttons %}
+{% if not quiz %}
+<form method="post" >
+    {% csrf_token %}
+    <button
+        type="submit"
+        class="btn btn-primary">{% csrf_token %}Finish Course
+    </button>
+</form>
+{% else %}
+<form method="post" >
+    {% csrf_token %}
+    <button
+        type="submit"
+        class="btn btn-primary">{% csrf_token %}Go to Quiz
+    </button>
+</form>
+{% endif %}
+
 <a role="button" href="{% url 'course:module' course.id previous_module.id %}"
    class="btn btn-primary">Back: {{previous_module}}
 </a>
-
 
 <a role="button" href="{% url 'users:dashboard' %}"
    class="btn btn-primary">Return to Dashboard

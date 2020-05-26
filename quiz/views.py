@@ -9,6 +9,8 @@ from django.utils import timezone
 from .forms import  AnswerForm
 from .models import Answer, Question, Quiz
 from userProfile.models import AnswersSubmitted, QuizAttempt
+from userProfile.models import ModuleCompletion, CourseCompletion
+from course.models import Module
 from datetime import datetime
 # Create your views here.
 
@@ -212,6 +214,7 @@ class SubmitQuizView(LoginRequiredMixin, generic.TemplateView):
     def post(self, request, *args, **kwargs):
         quiz_id = self.kwargs.pop('pk')
         user_attempt_no = self.kwargs.pop('user_attempt_no')
+        quiz = Quiz.objects.get(id=quiz_id)
 
         # determine the time taken
         attempt = QuizAttempt.objects.get(user=request.user,quiz=quiz_id,
@@ -222,6 +225,19 @@ class SubmitQuizView(LoginRequiredMixin, generic.TemplateView):
 
         attempt.time_taken=attempt.finish_time - attempt.start_time
         attempt.save()
+
+        # update module in course if the test was passed
+        if Module.objects.filter(quiz=quiz).exists():
+            module=Module.objects.get(quiz=quiz)
+            course=module.course
+            course_attempt=CourseCompletion.objects.get(user=request.user,
+                                                        course=course)
+            module_attempt=ModuleCompletion.objects.get(module=module
+                                            ,course_attempt=course_attempt)
+            # set module completion if it is
+            module_attempt.set_module_complete()
+            # set coursecomplete if it is
+            course_attempt.set_course_completed()
 
         return HttpResponseRedirect(
             reverse('quiz:endQuiz', kwargs={'pk':quiz_id,
@@ -247,11 +263,27 @@ class EndOfQuizView(LoginRequiredMixin, generic.TemplateView):
                                                   attempt=attempt)
         selected_answers=Answer.objects.filter(answerssubmitted__in=results)
         # report the score and the time_taken
-        score= attempt.score
+
+        if Module.objects.filter(quiz=quiz).exists():
+            module=Module.objects.get(quiz=quiz)
+            course=module.course
+            course_attempt=CourseCompletion.objects.get(user=request.user,
+                                                        course=course)
+            module_attempt=ModuleCompletion.objects.get(module=module
+                                            ,course_attempt=course_attempt)
+
+            if course_attempt.is_course_completed():
+                next_button=reverse('course:main_course')
+
+            else:
+                next_button=reverse('course:module', kwargs={
+                    'course_id':course.id,
+                    'module_id':course_attempt.get_latest_module().id
+                })
 
         return render(request, self.template_name,
                       {'quiz':quiz, 'attempt':attempt,
                        'results':results, 'username':request.user,
                        'questions':questions, 'answers':answers,
                        'selected_answers':selected_answers,
-                       'score':score})
+                       'score':attempt.score, 'next_button':next_button})
