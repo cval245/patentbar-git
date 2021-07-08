@@ -280,10 +280,16 @@ class EndOfQuizView(LoginRequiredMixin, generic.TemplateView):
                     'course_id':course.id,
                     'module_id':course_attempt.get_latest_module().id
                 })
+            return render(request, self.template_name,
+                          {'quiz':quiz, 'attempt':attempt,
+                           'results':results, 'username':request.user,
+                           'questions':questions, 'answers':answers,
+                           'selected_answers':selected_answers,
+                           'score':attempt.score, 'next_button':next_button})
 
         return render(request, self.template_name,
                       {'quiz':quiz, 'attempt':attempt,
                        'results':results, 'username':request.user,
                        'questions':questions, 'answers':answers,
                        'selected_answers':selected_answers,
-                       'score':attempt.score, 'next_button':next_button})
+                       'score':attempt.score})

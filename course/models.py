@@ -7,6 +7,7 @@ from quiz.models import Quiz
 
 class Course(models.Model):
      title = models.TextField()
+     order_no=models.IntegerField()
      def __str__(self):
           return self.title
 

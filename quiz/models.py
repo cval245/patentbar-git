@@ -11,6 +11,7 @@ class Quiz(models.Model):
 class Question(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     text = models.TextField()
+    opic = models.TextField(default="Unclassified")
     def __str__(self):
         return self.text
 

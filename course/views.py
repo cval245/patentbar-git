@@ -16,7 +16,7 @@ class MainCourseView(LoginRequiredMixin, generic.TemplateView):
     template_name = 'course/course_main.html'
 
     def get(self, request, *args, **kwargs):
-        courses = Course.objects.all()
+        courses = Course.objects.all().order_by('order_no')
         modules = Module.objects.all()
         return render(request, self.template_name,
                       {'username':request.user, 'courses':courses,
@@ -111,7 +111,6 @@ class ModuleView(LoginRequiredMixin, generic.TemplateView):
                            'modules_all':modules_all,
                            'next_module':next_module,
                            'quiz': quiz})
-        
 
         # if there is NOT a next_module (last module in course)
         elif next_mod_id == module.id:

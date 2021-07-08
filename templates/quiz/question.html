@@ -4,10 +4,10 @@
 
     <div class="card shadow p-1 my-5 " style="width:auto">
         <div class="card-body">
-            <h5 class="card-title">{{ question.text}}</h5>
+            <h5 class="card-title">{{ question.text|safe }}</h5>
             <form method="post" class="card-text">
                 {% csrf_token %}
-                {{ form.as_p }}
+                {{ form.as_p}}
                 <input type="submit" value="Submit">
 
         </div>
