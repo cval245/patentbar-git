@@ -14,7 +14,7 @@
     <script type="text/javascript"
             src="{% static 'js/js/jquery.countdown.js' %}"></script>
 </head>
-
+<div class="over-all">
 <nav class="navbar sticky-top navbar-expand-md navbar-light navbar-custom">
     <a class="navbar-brand text-dark" href="/">Ogden Prep</a>
     <div class="collapse navbar-collapse W-100 order-1 order-md-0 dual-collapse2"  id="navbarNav">
@@ -29,9 +29,9 @@
         <ul class="navbar-nav ml-auto">
             <li class="nav-item active">
                 {% block navbar_right %}
-                <a class ="navbar_link" href="{% url 'users:login' %}">
+                <a class ="navbar_link btn" href="{% url 'users:login' %}">
                     Login</a>
-                <a class ="navbar_link" href="{% url 'users:signup' %}">
+                <a class ="navbar_link btn" href="{% url 'users:signup' %}">
                     Signup</a>
                 {% endblock navbar_right %}
             </li>
@@ -40,7 +40,7 @@
 
 </nav>
 
-<div class="container-fluid content_container">
+<div class="main container-fluid content_container">
     <div class="row">
         <div class="col-md-3 col-lg-2 content_left">
             {% block content_left %}
@@ -58,18 +58,19 @@
         </div>
     </div>
 </div>
-<footer class="page-footer font-small blue pt-4">
-    <div class="container-fluid text-center text-md-left">
+<footer class="footer font-small blue pt-4">
+    {% comment %} <div class="container-fluid text-center text-md-left">
         <div class="row">
             <div class="col-md-6 mt-md-0 mt-3">
                 <h5>
-                    Footer Content
+                    <div class="footer-copyright text-center py-3">
+                        {% now "Y" as current_year %}
+                        Copyright {{ current_year }}
+                        </div>
                 </h5>
             </div>
         </div>
-    </div>
-    <div class="footer-copyright text-center py-3">
-        {% now "Y" as current_year %}
-        Copyright {{ current_year }}
-    </div>
+    </div> {% endcomment %}
+    
 </footer>
+</div>
