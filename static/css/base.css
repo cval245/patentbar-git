@@ -26,15 +26,39 @@ body {
 }
 
 .content_container {
+    flex: 1 0 auto;
     background-color: #C9E2ED;
 }
 
 .content_left {
+    flex: 1 0 auto;
     background-color: #6F9BAD;
 }
 
 .content_right {
+    flex: 1 0 auto;
     background-color: #F0BA9C;
+}
+.over-all{
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+.row {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: row;
+}
+.main{
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: row;
+}
+
+.footer {
+    height: 50px;
+    flex-shrink: 0;
+    background-color: #3C5F6E;
 }
 
 h1 {
@@ -42,7 +66,7 @@ h1 {
 }
 
 .navbar_link {
-    width: 300px;
+    /* width: 30px; */
     padding: 10px;
 }
 
