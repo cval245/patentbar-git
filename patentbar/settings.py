@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
-import django_heroku
+import django_on_heroku
 import dj_database_url
 from decouple import config
 
@@ -158,4 +158,4 @@ LOGOUT_URL = 'users:logout'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-django_heroku.settings(locals())
+django_on_heroku.settings(locals())
