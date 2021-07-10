@@ -1,2 +1,2 @@
 web: gunicorn patentbar.wsgi
-release: ptyhon manage.py migrate
+release: python manage.py migrate
